@@ -17,7 +17,7 @@ public class PercentCircleView extends View {
     private int progressColor = Color.YELLOW;
     private float viewRadius = 0f;
     private float circleSize = dip2px(10f);
-    private float strokeWidth = dip2px(2.0f);
+    private float strokeWidth = dip2px(3.0f);
     private int progress = 0;
 
     private int max = 100;

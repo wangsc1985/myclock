@@ -13,16 +13,16 @@ import androidx.annotation.Nullable;
 public class PercentCircleView1 extends View {
 
     private static final String _TAG = "wangsc";
-    private Paint paint = new Paint(), paint2 = new Paint();
+    private Paint paint = new Paint();
     private int color = Color.YELLOW;
     private float viewRadius = 0f;
     private float circleSize = dip2px(10f);
-    private float strokeWidth = dip2px(2.0f);
+    private float strokeWidth = dip2px(3.0f);
     private int progress = 0, preProgress = -1;
-    private boolean isSequence=true;
+    private boolean isInversion =true;
 
     private int max = 100;
-    private RectF rectF = null;
+    private RectF rectF;
 
     public PercentCircleView1(Context context) {
         this(context, null);
@@ -61,10 +61,10 @@ public class PercentCircleView1 extends View {
         super.onDraw(canvas);
         paint.setColor(color);
         paint.setStrokeWidth(strokeWidth);
-        if(isSequence) {
+        if(isInversion) {
             canvas.drawArc(rectF, -90f, 360 * (progress * 1.0f / this.max), false, paint);
         }else{
-            canvas.drawArc(rectF, 360 * (progress * 1.0f / this.max)-90f, 360f-360 * (progress * 1.0f / this.max), false, paint2);
+            canvas.drawArc(rectF, 360 * (progress * 1.0f / this.max)-90f, 360f-360 * (progress * 1.0f / this.max), false, paint);
         }
     }
 
@@ -81,7 +81,7 @@ public class PercentCircleView1 extends View {
 
         this.progress = progress;
         if (progress < preProgress) {
-            isSequence=!isSequence;
+            isInversion =!isInversion;
         }
         preProgress = progress;
         invalidate();
