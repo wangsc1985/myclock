@@ -31,8 +31,8 @@ import com.wang17.myclock.database.MarkDay;
 import com.wang17.myclock.database.utils.DataContext;
 import com.wang17.myclock.model.DateTime;
 import com.wang17.myclock.model.Lunar;
+import com.wang17.myclock.plugin.ColoursClockCircleView;
 import com.wang17.myclock.plugin.PercentCircleView;
-import com.wang17.myclock.plugin.PercentCircleView1;
 import com.wang17.myclock.utils.LightSensorUtil;
 import com.wang17.myclock.utils._Session;
 import com.wang17.myclock.utils._Utils;
@@ -65,7 +65,7 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
     TextView tvMarkday;
     TextView tvSensor;
     PercentCircleView pcReligious;
-    PercentCircleView1 pcSecond;
+    ColoursClockCircleView pcSecond;
 
     boolean isDaytime=true,isNock=false,isLoaded=false;
 
@@ -151,7 +151,6 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
         int battery = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
         tvBattery.setText(battery + "%");
 
-        pcSecond.setMax(60);
 
         /**
          * 监听
@@ -169,12 +168,31 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
         /**
          *
          */
+        root.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isNock=!isNock;
+            }
+        });
         tvTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 isNock=!isNock;
             }
         });
+        tvMarkday.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isNock=!isNock;
+            }
+        });
+        tvDay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isNock=!isNock;
+            }
+        });
+
         tvMarkday.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
