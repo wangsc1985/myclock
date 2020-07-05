@@ -54,6 +54,7 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
     private final Handler mHideHandler = new Handler();
 
     DataContext dataContext;
+    SoundPool soundPool;
 
     ConstraintLayout root;
     TextView tvDay;
@@ -103,6 +104,12 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
     Timer timer;
     float lightLevel;
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startTimer();
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,7 +140,7 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
             }
         });
 
-        final SoundPool soundPool = new SoundPool(10, AudioManager.STREAM_MUSIC, 5);
+        soundPool = new SoundPool(10, AudioManager.STREAM_MUSIC, 5);
         soundPool.load(this, R.raw.second, 1);
         soundPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
             @Override
@@ -199,6 +206,12 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
                 return true;
             }
         });
+
+
+
+    }
+
+    private void startTimer() {
         timer = new Timer();
         timer.schedule(new TimerTask() {
             public void run() {
@@ -307,7 +320,6 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
                 });
             }
         }, 0, 1000);
-
     }
 
 

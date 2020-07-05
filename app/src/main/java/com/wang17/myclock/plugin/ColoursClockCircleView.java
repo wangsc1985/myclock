@@ -10,14 +10,16 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
+import com.wang17.myclock.R;
+
 public class ColoursClockCircleView extends View {
 
     private static final String _TAG = "wangsc";
     private Paint paint = new Paint();
-    private int color = Color.YELLOW;
+    private int color1 = getResources().getColor(R.color.second_color1),color2 = getResources().getColor(R.color.second_color2);
     private float viewRadius = 0f;
     private float circleSize = dip2px(10f);
-    private float strokeWidth = dip2px(3.0f);
+    private float strokeWidth = dip2px(5.0f);
     private int progress = 0, preProgress = -1;
     private boolean isInversion = true;
 
@@ -37,7 +39,6 @@ public class ColoursClockCircleView extends View {
     }
 
     private void init() {
-        paint.setColor(color);
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(strokeWidth);
         paint.setAntiAlias(true);
@@ -58,32 +59,8 @@ public class ColoursClockCircleView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        paint.setColor(color);
         paint.setStrokeWidth(strokeWidth);
 
-        /**
-         * 顺时针
-         * 22秒   每5秒30度换一次颜色
-         * 实际弧度：132度。
-         * 0-5秒（0-30度）：黄色；
-         * 5-10秒（33-60度）：红色；
-         * 10-15秒（63-90度）：黄色；
-         * 15-20秒（93-120度）：红色；
-         * 21-22秒（123-132度）：黄色
-         *
-         * 逆时针
-         * 12秒    36度
-         *
-         * 23-25秒（132-150度）：黄色；
-         * 26-30秒（153-180度）：红色；
-         * 31-35秒（183-210度）：黄色；
-         * 36-40秒（213-240）：红色；
-         * 41-45秒（243-270）：黄色
-         * 46-50秒（273-300）：红色
-         * 51-55秒（303-330度）：黄色
-         * 56-60秒（333-360度）：红色
-         *
-         */
         float startAngle = 0f, sweepAngle = 0f;
         if (isInversion) {
             startAngle = -90f;
@@ -92,43 +69,41 @@ public class ColoursClockCircleView extends View {
             int num = (int) sweepAngle / 30;
             for (int i = 0; i < num; i++) {
                 if (i % 2 == 0) {
-                    paint.setColor(Color.RED);
+                    paint.setColor(color1);
                 } else {
-                    paint.setColor(Color.YELLOW);
+                    paint.setColor(color2);
                 }
                 canvas.drawArc(rectF, startAngle + 30f * i, 30f, false, paint);
             }
             if (num % 2 == 0) {
-                paint.setColor(Color.RED);
+                paint.setColor(color1);
             } else {
-                paint.setColor(Color.YELLOW);
+                paint.setColor(color2);
             }
             canvas.drawArc(rectF, startAngle + 30f * num, sweepAngle % 30f, false, paint);
 
         } else {
             startAngle = 6f * progress - 90f;
-            /**
-             * 60秒  250度 开始
-             */
-
 
             int startI = (int) 6f * progress / 30;  //  12
             if (progress % 5 != 0) {
                 if (startI % 2 == 0) {
-                    paint.setColor(Color.RED);
+                    paint.setColor(color1);
                 } else {
-                    paint.setColor(Color.YELLOW);
+                    paint.setColor(color2);
                 }
                 canvas.drawArc(rectF, startAngle, 30 * (startI + 1) - 6f * progress, false, paint);
-            }else{
+            }
+            else{
                 startI--;
             }
 
+            paint.setStrokeWidth(strokeWidth);
             for (int i = startI+1; i < 12; i++) {
                 if (i % 2 == 0) {
-                    paint.setColor(Color.RED);
+                    paint.setColor(color1);
                 } else {
-                    paint.setColor(Color.YELLOW);
+                    paint.setColor(color2);
                 }
                 canvas.drawArc(rectF, -90f + 30f * i, 30f, false, paint);
             }
