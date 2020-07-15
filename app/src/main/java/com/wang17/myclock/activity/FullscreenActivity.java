@@ -295,10 +295,11 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
                              * 整分获取戒期
                              */
                             if (now.getSecond() == 0) {
+                                // 更新戒期
+                                refreshSexDays();
+
                                 if (now.getMinite() == 0) {
-                                    // 更新戒期
-                                    refreshSexDays();
-                                    // 整点报时
+                                    // 整点报时：在光敏大于5，也就是非夜间时，整点报时。
                                     if (lightLevel > 5)
                                         _Utils.speaker(FullscreenActivity.this, now.getHour() + "点");
                                 }
