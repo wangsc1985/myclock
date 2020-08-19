@@ -10,18 +10,6 @@
     tools:context=".activity.FullscreenActivity">
 
     <TextView
-        android:id="@+id/tv_sensor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="145"
-        android:textColor="@color/progressbar_background"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_battery"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/tv_battery" />
-
-    <TextView
         android:id="@+id/tv_day"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -29,7 +17,7 @@
         android:keepScreenOn="true"
         android:text="8"
         android:textColor="#FFFFFF"
-        android:textSize="150sp"
+        android:textSize="130sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/tv_time"
         app:layout_constraintEnd_toEndOf="parent"
@@ -54,7 +42,7 @@
         android:keepScreenOn="true"
         android:text="16"
         android:textColor="#FFFFFF"
-        android:textSize="150sp"
+        android:textSize="130sp"
         android:textStyle="bold"
         android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/tv_lunar_day"
@@ -126,7 +114,7 @@
         android:keepScreenOn="true"
         android:text="08:08"
         android:textColor="#FFFFFF"
-        android:textSize="140sp"
+        android:textSize="120sp"
         android:textStyle="bold"
         android:typeface="normal"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -138,6 +138,25 @@ public class DateTime extends GregorianCalendar {
     }
 
     /**
+     * 今天、昨天、前天
+     * @return
+     */
+    public String toOffset2() {
+        DateTime now = new DateTime();
+        int dayOffset = DateTime.dayOffset(this,now);
+        switch (dayOffset){
+            case 0:
+                return "今天" + this.toShortTimeString();
+            case 1:
+                return "昨天"+ this.toShortTimeString();
+            case 2:
+                return "前天"+ this.toShortTimeString();
+            default:
+                return dayOffset+"天"+ this.toShortTimeString();
+
+        }
+    }
+    /**
      * 格式：**@/**
      *
      * @return

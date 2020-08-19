@@ -17,6 +17,7 @@ import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.NumberPicker;
 import android.widget.TextView;
@@ -27,13 +28,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.wang17.myclock.R;
+import com.wang17.myclock.callback.CloudCallback;
 import com.wang17.myclock.database.MarkDay;
+import com.wang17.myclock.database.Setting;
 import com.wang17.myclock.database.utils.DataContext;
 import com.wang17.myclock.model.DateTime;
 import com.wang17.myclock.model.Lunar;
 import com.wang17.myclock.plugin.ColoursClockCircleView;
 import com.wang17.myclock.plugin.PercentCircleView;
 import com.wang17.myclock.utils.LightSensorUtil;
+import com.wang17.myclock.utils._CloudUtils;
 import com.wang17.myclock.utils._Session;
 import com.wang17.myclock.utils._Utils;
 
@@ -64,11 +68,10 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
     TextView tvMonth;
     TextView tvBattery;
     TextView tvMarkday;
-    TextView tvSensor;
     PercentCircleView pcReligious;
     ColoursClockCircleView pcSecond;
 
-    boolean isDaytime=true,isNock=false,isLoaded=false;
+    boolean isDaytime = true, isNock = false, isLoaded = false;
 
     SensorManager sensorManager;
 
@@ -128,7 +131,6 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
         tvMonth = findViewById(R.id.tv_lunar_month);
         tvBattery = findViewById(R.id.tv_battery);
         tvMarkday = findViewById(R.id.tv_markday);
-        tvSensor = findViewById(R.id.tv_sensor);
         pcReligious = findViewById(R.id.pc_religious);
         pcSecond = findViewById(R.id.pc_second);
 
@@ -145,7 +147,7 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
         soundPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
             @Override
             public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
-                isLoaded=true;
+                isLoaded = true;
             }
         });
 
@@ -178,25 +180,25 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
         root.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                isNock=!isNock;
+                isNock = !isNock;
             }
         });
         tvTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                isNock=!isNock;
+                isNock = !isNock;
             }
         });
         tvMarkday.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                isNock=!isNock;
+                isNock = !isNock;
             }
         });
         tvDay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                isNock=!isNock;
+                isNock = !isNock;
             }
         });
 
@@ -207,8 +209,7 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
             }
         });
 
-
-
+        loadSexdateFromCloud();
     }
 
     private void startTimer() {
@@ -228,9 +229,9 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
                             tvLunarDay.setText(lunar.getChinaDayString());
                             tvTime.setText(now.toShortTimeString());
                             tvWeek.setText(now.getWeekDayStr());
-                            pcSecond.setProgress(now.getSecond()==0?60:now.getSecond());
+                            pcSecond.setProgress(now.getSecond() == 0 ? 60 : now.getSecond());
 
-                            if(isNock&&isLoaded){
+                            if (isNock && isLoaded) {
                                 soundPool.play(1, 1f, 1f, 0, 0, 1);
                             }
 
@@ -302,14 +303,15 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
                                     // 整点报时：在光敏大于5，也就是非夜间时，整点报时。
                                     if (lightLevel > 5)
                                         _Utils.speaker(FullscreenActivity.this, now.getHour() + "点");
+
+                                    loadSexdateFromCloud();
                                 }
                                 int weekday = now.get(Calendar.DAY_OF_WEEK);
                                 if (weekday != 7 && weekday != 1) {
                                     if (now.getHour() == 8 && now.getMinite() == 55) {
-                                        _Utils.ling(FullscreenActivity.this,R.raw.morning);
-                                    }
-                                    else if (now.getHour() == 14 && now.getMinite() == 55) {
-                                        _Utils.ling(FullscreenActivity.this,R.raw.bye);
+                                        _Utils.ling(FullscreenActivity.this, R.raw.morning);
+                                    } else if (now.getHour() == 14 && now.getMinite() == 55) {
+                                        _Utils.ling(FullscreenActivity.this, R.raw.bye);
                                     }
                                 }
                             }
@@ -407,28 +409,59 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
         }
     }
 
+    DateTime sexDate = null;
+
+    private void loadSexdateFromCloud() {
+        _CloudUtils.getSetting("0088", Setting.KEYS.wx_sex_date.toString(), new CloudCallback() {
+            @Override
+            public void excute(int code, Object result) {
+                e(code);
+                e(result);
+                switch (code) {
+                    case 0:
+                        sexDate = new DateTime(Long.parseLong(result.toString()));
+                        refreshSexDays();
+                        break;
+                    case -1:
+                        break;
+                    case -2:
+                        break;
+                    case -3:
+                        break;
+                    case -4:
+                        break;
+                }
+            }
+        });
+    }
+
+    private void e(Object log) {
+        Log.e("wangsc", log.toString());
+    }
 
     /**
      * 设置行房天数。
      */
     private void refreshSexDays() {
-        DataContext dataContext = new DataContext(this);
-        // 计时计日
-        String text = "0";
-        int progress = 0, progressMax = 24;
+        uiThreadHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                // 计时计日
+                String text = "0";
+                int progress = 0, progressMax = 24 * 60;
 
-        UUID id = _Session.UUID_NULL;
-        MarkDay lastMarkDay = dataContext.getLastMarkDay(id);
-        if (lastMarkDay != null) {
-            int have = (int) ((System.currentTimeMillis() - lastMarkDay.getDateTime().getTimeInMillis()) / 3600000);
-            int day = have / 24;
-            int hour = have % 24;
-            progress = hour;
-            text = day + "";
-        }
-        tvMarkday.setText(text);
-        pcReligious.setMax(progressMax);
-        pcReligious.setProgress(progress);
+                if (sexDate != null) {
+                    int have = (int) ((System.currentTimeMillis() - sexDate.getTimeInMillis()) / 60000);
+                    int day = have / 60 / 24;
+                    int minute = have % (24 * 60);
+                    progress = minute;
+                    text = day + "";
+                }
+                tvMarkday.setText(text);
+                pcReligious.setMax(progressMax);
+                pcReligious.setProgress(progress);
+            }
+        });
     }
 
     @Override
@@ -475,7 +508,6 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_LIGHT) {
             float light_strength = event.values[0];
-            tvSensor.setText(new DecimalFormat("0").format(light_strength));
             lightLevel = light_strength;
         }
     }

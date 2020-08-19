@@ -60,7 +60,7 @@ public class Setting{
     }
 
     public enum KEYS{
-
+        wx_request_code,wx_sex_date;
     }
     //endregion
 }
