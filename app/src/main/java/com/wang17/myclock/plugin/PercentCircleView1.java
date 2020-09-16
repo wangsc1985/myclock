@@ -21,7 +21,7 @@ public class PercentCircleView1 extends View {
     private int progress = 0, preProgress = -1;
     private boolean isInversion =true;
 
-    private int max = 100;
+    private int max = 60;
     private RectF rectF;
 
     public PercentCircleView1(Context context) {

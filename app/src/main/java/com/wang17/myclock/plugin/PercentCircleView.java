@@ -20,7 +20,7 @@ public class PercentCircleView extends View {
     private float strokeWidth = dip2px(3.0f);
     private int progress = 0;
 
-    private int max = 100;
+    private int max = 60;
     private RectF rectF = null;
 
     public PercentCircleView(Context context) {

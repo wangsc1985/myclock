@@ -17,10 +17,12 @@ import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.NumberPicker;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
@@ -36,6 +38,7 @@ import com.wang17.myclock.model.DateTime;
 import com.wang17.myclock.model.Lunar;
 import com.wang17.myclock.plugin.ColoursClockCircleView;
 import com.wang17.myclock.plugin.PercentCircleView;
+import com.wang17.myclock.plugin.PercentCircleView1;
 import com.wang17.myclock.utils.LightSensorUtil;
 import com.wang17.myclock.utils._CloudUtils;
 import com.wang17.myclock.utils._Session;
@@ -69,7 +72,8 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
     TextView tvBattery;
     TextView tvMarkday;
     PercentCircleView pcReligious;
-    ColoursClockCircleView pcSecond;
+    PercentCircleView1 pcSecond;
+    MainReciver mainReciver;
 
     boolean isDaytime = true, isNock = false, isLoaded = false;
 
@@ -137,7 +141,7 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
         tvTime.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                addMarkDayDialog(new DateTime());
+                loadSexdateFromCloud();
                 return true;
             }
         });
@@ -164,7 +168,7 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
         /**
          * 监听
          */
-        MainReciver mainReciver = new MainReciver();
+        mainReciver = new MainReciver();
         IntentFilter filter = new IntentFilter();
         // 监控电量变化
         filter.addAction(Intent.ACTION_BATTERY_CHANGED);
@@ -325,90 +329,6 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
         }, 0, 1000);
     }
 
-
-    public void addMarkDayDialog(DateTime dateTime) {
-
-        try {
-            View view = View.inflate(this, R.layout.inflate_dialog_date_picker, null);
-            final android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this).setView(view).create();
-            dialog.setTitle("设定最近时间");
-
-            final int year = dateTime.getYear();
-            int month = dateTime.getMonth();
-            int maxDay = dateTime.getActualMaximum(Calendar.DAY_OF_MONTH);
-            int day = dateTime.getDay();
-            int hour = dateTime.getHour();
-
-            String[] yearNumbers = new String[3];
-            for (int i = year - 2; i <= year; i++) {
-                yearNumbers[i - year + 2] = i + "年";
-            }
-            String[] monthNumbers = new String[12];
-            for (int i = 0; i < 12; i++) {
-                monthNumbers[i] = i + 1 + "月";
-            }
-            String[] dayNumbers = new String[31];
-            for (int i = 0; i < 31; i++) {
-                dayNumbers[i] = i + 1 + "日";
-            }
-            String[] hourNumbers = new String[24];
-            for (int i = 0; i < 24; i++) {
-                hourNumbers[i] = i + "点";
-            }
-            final NumberPicker npYear = (NumberPicker) view.findViewById(R.id.npYear);
-            final NumberPicker npMonth = (NumberPicker) view.findViewById(R.id.npMonth);
-            final NumberPicker npDay = (NumberPicker) view.findViewById(R.id.npDay);
-            final NumberPicker npHour = (NumberPicker) view.findViewById(R.id.npHour);
-            npYear.setMinValue(year - 2);
-            npYear.setMaxValue(year);
-            npYear.setValue(year);
-            npYear.setDisplayedValues(yearNumbers);
-            npYear.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS); // 禁止对话框打开后数字选择框被选中
-            npMonth.setMinValue(1);
-            npMonth.setMaxValue(12);
-            npMonth.setDisplayedValues(monthNumbers);
-            npMonth.setValue(month + 1);
-            npMonth.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS); // 禁止对话框打开后数字选择框被选中
-            npDay.setMinValue(1);
-            npDay.setMaxValue(31);
-            npDay.setDisplayedValues(dayNumbers);
-            npDay.setValue(day);
-            npDay.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS); // 禁止对话框打开后数字选择框被选中
-            npHour.setMinValue(0);
-            npHour.setMaxValue(23);
-            npHour.setDisplayedValues(hourNumbers);
-            npHour.setValue(hour);
-            npHour.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS); // 禁止对话框打开后数字选择框被选中
-
-            dialog.setButton(DialogInterface.BUTTON_POSITIVE, "确定", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    int y = npYear.getValue();
-                    int m = npMonth.getValue() - 1;
-                    int d = npDay.getValue();
-                    int h = npHour.getValue();
-                    DateTime selectedDateTime = new DateTime(y, m, d, h, 0, 0);
-                    MarkDay markDay = new MarkDay(selectedDateTime, _Session.UUID_NULL, "");
-                    dataContext.addMarkDay(markDay);
-
-                    //
-                    refreshSexDays();
-
-                    dialog.dismiss();
-                }
-            });
-            dialog.setButton(DialogInterface.BUTTON_NEGATIVE, "取消", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            });
-            dialog.show();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     DateTime sexDate = null;
 
     private void loadSexdateFromCloud() {
@@ -431,6 +351,9 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
                     case -4:
                         break;
                 }
+                Looper.prepare();
+                Toast.makeText(FullscreenActivity.this,"更新完毕",Toast.LENGTH_LONG).show();
+                Looper.loop();
             }
         });
     }
@@ -472,6 +395,7 @@ public class FullscreenActivity extends AppCompatActivity implements SensorEvent
             timer = null;
         }
 
+        unregisterReceiver(mainReciver);
         LightSensorUtil.unregisterLightSensor(sensorManager, this);
     }
 
