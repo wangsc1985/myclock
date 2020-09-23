@@ -44,8 +44,6 @@ object _SinaStockUtils {
             val stockInfoList: MutableList<StockInfo> = ArrayList()
             try {
                 for (stock in stocks) {
-//                        final Stock stock = stock;
-
                     val url = "https://hq.sinajs.cn/list=" + stock.exchange + stock.code
                     val client = OkHttpClient()
 
@@ -145,6 +143,6 @@ object _SinaStockUtils {
     }
 
     interface OnLoadStockInfoListListener {
-        fun onLoadFinished(infoList: List<StockInfo>, totalProfit: Double, averageProfit: Double, time: String)
+        fun onLoadFinished(infoList: MutableList<StockInfo>, totalProfit: Double, averageProfit: Double, time: String)
     }
 }
