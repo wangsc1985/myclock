@@ -1,25 +1,16 @@
-package com.wang17.myclock.database.utils;
+package com.wang17.myclock.database.utils
 
-import android.content.Context;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
+import android.content.Context
+import android.database.SQLException
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 
 /**
  * Created by 阿弥陀佛 on 2015/11/18.
  */
-public class DatabaseHelper extends SQLiteOpenHelper {
-
-    private static final int VERSION = 1;
-    private static final String DATABASE_NAME = "myclock.db";
-
-    public DatabaseHelper(Context context) {
-        super(context, DATABASE_NAME, null, VERSION);
-    }
-
-    @Override
-    public void onCreate(SQLiteDatabase db) {
+class DatabaseHelper(context: Context?) : SQLiteOpenHelper(context, DATABASE_NAME, null, VERSION) {
+    override fun onCreate(db: SQLiteDatabase) {
         // 创建数据库后，对数据库的操作
         try {
             db.execSQL("create table if not exists setting("
@@ -28,7 +19,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     + "level INT NOT NULL DEFAULT 100,"
                     + "updateTime LONG NOT NULL DEFAULT 1,"
                     + "syncTime LONG NOT NULL DEFAULT 1,"
-                    + "status INT NOT NULL DEFAULT 1)");
+                    + "status INT NOT NULL DEFAULT 1)")
             db.execSQL("create table if not exists markDay("
                     + "id TEXT PRIMARY KEY,"
                     + "dateTime LONG,"
@@ -36,7 +27,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     + "summary TEXT NOT NULL DEFAULT '',"
                     + "updateTime LONG NOT NULL DEFAULT 1,"
                     + "syncTime LONG NOT NULL DEFAULT 1,"
-                    + "status INT NOT NULL DEFAULT 1)");
+                    + "status INT NOT NULL DEFAULT 1)")
             db.execSQL("create table if not exists runLog("
                     + "id TEXT PRIMARY KEY,"
                     + "runTime LONG,"
@@ -45,8 +36,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     + "message TEXT,"
                     + "updateTime LONG NOT NULL DEFAULT 1,"
                     + "syncTime LONG NOT NULL DEFAULT 1,"
-                    + "status INT NOT NULL DEFAULT 1)");
-
+                    + "status INT NOT NULL DEFAULT 1)")
             db.execSQL("create table if not exists location("
                     + "Id TEXT PRIMARY KEY,"
                     + "UserId TEXT,"
@@ -70,7 +60,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     + "Summary TEXT,"
                     + "updateTime LONG NOT NULL DEFAULT 1,"
                     + "syncTime LONG NOT NULL DEFAULT 1,"
-                    + "status INT NOT NULL DEFAULT 1)");
+                    + "status INT NOT NULL DEFAULT 1)")
             db.execSQL("create table if not exists dayItem("
                     + "id TEXT PRIMARY KEY,"
                     + "name TEXT,"
@@ -78,8 +68,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     + "targetInHour INT,"
                     + "updateTime LONG NOT NULL DEFAULT 1,"
                     + "syncTime LONG NOT NULL DEFAULT 1,"
-                    + "status INT NOT NULL DEFAULT 1)");
-            db.execSQL("insert into dayItem values('00000000-0000-0000-0000-000000000000','持戒记录','',48,1,1,1)");
+                    + "status INT NOT NULL DEFAULT 1)")
+            db.execSQL("insert into dayItem values('00000000-0000-0000-0000-000000000000','持戒记录','',48,1,1,1)")
             db.execSQL("create table if not exists bankToDo("
                     + "id TEXT PRIMARY KEY,"
                     + "dateTime LONG,"
@@ -88,28 +78,29 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     + "money REAL,"
                     + "updateTime LONG NOT NULL DEFAULT 1,"
                     + "syncTime LONG NOT NULL DEFAULT 1,"
-                    + "status INT NOT NULL DEFAULT 1)");
-        } catch (SQLException e) {
-            Log.e("wangsc", e.getMessage());
+                    + "status INT NOT NULL DEFAULT 1)")
+        } catch (e: SQLException) {
+            Log.e("wangsc", e.message)
         }
     }
 
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         // 更改数据库版本的操作
         try {
-            switch (oldVersion) {
+            when (oldVersion) {
             }
-        } catch (SQLException e) {
-            Log.e("wangsc", e.getMessage());
+        } catch (e: SQLException) {
+            Log.e("wangsc", e.message)
         }
     }
 
-    @Override
-    public void onOpen(SQLiteDatabase db) {
-        super.onOpen(db);
+    override fun onOpen(db: SQLiteDatabase) {
+        super.onOpen(db)
         // 每次成功打开数据库后首先被执行
     }
 
-
+    companion object {
+        private const val VERSION = 1
+        private const val DATABASE_NAME = "myclock.db"
+    }
 }
