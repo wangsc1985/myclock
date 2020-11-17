@@ -3,19 +3,20 @@ package com.wang17.myclock.utils
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
+import android.app.AlertDialog
 import android.app.admin.DevicePolicyManager
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.media.SoundPool
 import android.os.Build
+import android.os.Environment
 import android.os.PowerManager
 import android.os.PowerManager.WakeLock
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import com.wang17.myclock.model.DateTime
 import java.io.*
 import java.util.*
@@ -24,6 +25,47 @@ import java.util.*
  * Created by 阿弥陀佛 on 2016/10/18.
  */
 object _Utils {
+
+    /**
+     * 获取电源锁，保持该服务在屏幕熄灭时仍然获取CPU时，保持运行
+     *
+     *
+     * PARTIAL_WAKE_LOCK :保持CPU 运转，屏幕和键盘灯是关闭的。
+     * SCREEN_DIM_WAKE_LOCK ：保持CPU 运转，允许保持屏幕显示但有可能是灰的，关闭键盘灯
+     * SCREEN_BRIGHT_WAKE_LOCK ：保持CPU 运转，保持屏幕高亮显示，关闭键盘灯
+     * FULL_WAKE_LOCK ：保持CPU 运转，保持屏幕高亮显示，键盘灯也保持亮度
+     *
+     * @param context
+     */
+    fun acquireWakeLock(context: Context, PowerManager: Int): WakeLock? {
+        try {
+            val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            val wakeLock = pm.newWakeLock(PowerManager, context.javaClass.canonicalName)
+            if (null != wakeLock) {
+                wakeLock.acquire()
+                Log.e("wangsc", "锁定唤醒锁: $wakeLock")
+                return wakeLock
+            }
+        } catch (e: java.lang.Exception) {
+        }
+        return null
+    }
+
+    /**
+     * 释放设备电源锁
+     */
+    fun releaseWakeLock(context: Context?, wakeLock: WakeLock?) {
+        var wakeLock = wakeLock
+        try {
+            Log.e("wangsc", "解除唤醒锁: $wakeLock")
+            if (null != wakeLock && wakeLock.isHeld) {
+                wakeLock.release()
+                wakeLock = null
+            }
+        } catch (e: java.lang.Exception) {
+        }
+    }
+
     /**
      * 隐藏虚拟按键，并且全屏
      */
@@ -154,16 +196,22 @@ object _Utils {
         }
     }
 
-    fun log2file(filename: String?, item: String?, message: String?) {
+    val ROOT_DIR = File(Environment.getExternalStorageDirectory().toString() + "/0/myclock")
+    /**
+     * 将日志记录到指定文件，文件名{filename}不用添加后缀。
+     */
+    fun log2file(filename: String, item: String, message: String?) {
         try {
-            val logFile = File(_Session.ROOT_DIR, filename)
+            val logFile = File(ROOT_DIR, "${filename}.log")
             val writer = BufferedWriter(FileWriter(logFile, true))
             writer.write(DateTime().toLongDateTimeString())
             writer.newLine()
             writer.write(item)
             writer.newLine()
-            writer.write(message ?: "空")
-            writer.newLine()
+            if(message!=null) {
+                writer.write(message)
+                writer.newLine()
+            }
             writer.flush()
             writer.close()
         } catch (e: IOException) {

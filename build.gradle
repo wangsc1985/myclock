@@ -6,13 +6,24 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:4.0.0"
+        classpath 'com.android.tools.build:gradle:4.1.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath"org.jetbrains.kotlin:kotlin-android-extensions:$kotlin_version"
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
+//    /**
+//     * start 调试时使用自动签名，手动添加。
+//     */
+//    signingConfigs {
+//        release {
+//            storeFile file('wangsc.jks')
+//            storePassword 'wangsc351489'
+//            keyAlias 'key'
+//            keyPassword 'wangsc351489'
+//        }
+//    }
 }
 
 allprojects {

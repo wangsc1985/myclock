@@ -3,6 +3,7 @@ package com.wang17.myclock.utils
 import android.os.Environment
 import com.wang17.myclock.model.Commodity
 import com.wang17.myclock.model.DateTime
+import okhttp3.OkHttpClient
 import java.io.File
 import java.util.*
 
@@ -33,8 +34,11 @@ object _Session {
     var commoditys: MutableList<Commodity> = ArrayList()
     private const val _ATAG = "wangsc"
 
+
+    val okHttpClient:OkHttpClient
     init {
         try {
+            okHttpClient= OkHttpClient()
             /**
              * 加载念佛音乐列表
              */

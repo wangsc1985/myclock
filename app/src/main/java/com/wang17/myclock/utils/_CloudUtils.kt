@@ -158,7 +158,6 @@ object _CloudUtils {
     fun getSetting(pwd: String, name: String, callback: CloudCallback) {
         newMsgCount = 0
 
-
         // 获取accessToken
         OkHttpClientUtil.getRequest("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=wxbdf065bdeba96196&secret=d2834f10c0d81728e73a4fe4012c0a5d", object : HttpCallback {
             override fun excute(html: String) {

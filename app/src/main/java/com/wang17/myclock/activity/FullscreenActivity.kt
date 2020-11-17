@@ -35,7 +35,10 @@ import com.wang17.myclock.utils._SinaStockUtils
 import com.wang17.myclock.utils._Utils
 import kotlinx.android.synthetic.main.activity_fullscreen.*
 import kotlinx.android.synthetic.main.activity_fund_monitor.*
+import java.io.DataInputStream
+import java.net.ServerSocket
 import java.text.DecimalFormat
+import java.time.DayOfWeek
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import kotlinx.android.synthetic.main.activity_fullscreen.imageView_warning as imageView_warning1
@@ -51,7 +54,6 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
     var mainReciver: MainReciver
     var isNock: Boolean
     var isLoaded: Boolean
-    var uiThreadHandler: Handler
     var timer: Timer
     var lightLevel: Float
     var sexDate: DateTime? = null
@@ -81,7 +83,6 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         mainReciver = MainReciver()
         isNock = false
         isLoaded = false
-        uiThreadHandler = Handler()
         mHideHandler = Handler()
         timer = Timer()
         lightLevel = 0f
@@ -92,11 +93,19 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         startTimer()
     }
 
+
+    fun toFundMonitor(){
+        this.finish()
+        startActivity(Intent(this,FundMonitorActivity::class.java))
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_fullscreen)
-        uiThreadHandler = Handler()
+
+        startSocket()
+
         dataContext = DataContext(this)
         tv_time.setOnLongClickListener(OnLongClickListener {
             loadSexdateFromCloud()
@@ -128,8 +137,7 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
          */
         frameLayout.setOnClickListener({ isNock = !isNock })
         frameLayout.setOnLongClickListener {
-            this.finish()
-            startActivity(Intent(this,FundMonitorActivity::class.java))
+            toFundMonitor()
             true
         }
         tv_time.setOnClickListener(View.OnClickListener { isNock = !isNock })
@@ -170,6 +178,22 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
     private fun startTimer() {
         timer.schedule(object : TimerTask() {
             override fun run() {
+                val now = DateTime()
+
+                val startDate = DateTime()
+                startDate.set(Calendar.HOUR_OF_DAY,9)
+                startDate.set(Calendar.MINUTE,25)
+                startDate.set(Calendar.SECOND,0)
+                val endDate = DateTime()
+                endDate.set(Calendar.HOUR_OF_DAY,15)
+                endDate.set(Calendar.MINUTE,0)
+                endDate.set(Calendar.SECOND,0)
+
+                val weekday = now.get((Calendar.DAY_OF_WEEK))
+                if (weekday != 7 && weekday != 1&&(now.timeInMillis>startDate.timeInMillis&&now.timeInMillis<endDate.timeInMillis)) {
+                    toFundMonitor()
+                    return
+                }
 /*
                 runOnUiThread {
                     if(isFundMonitor){
@@ -240,9 +264,8 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                     })
                 }
 */
-                uiThreadHandler.post {
+                runOnUiThread {
                     try {
-                        val now = DateTime()
                         val lunar = Lunar(now)
                         val day = now.day.toString() + ""
 //                        if (!isFundMonitor)
@@ -290,12 +313,19 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                                 if (lightLevel > 5) _Utils.speaker(this@FullscreenActivity, now.hour.toString() + "点", 1.0f, 1.0f)
                                 loadSexdateFromCloud()
                             }
-                            val weekday = now[Calendar.DAY_OF_WEEK]
                             if (weekday != 7 && weekday != 1) {
-                                if (now.hour == 8 && now.minite == 55) {
-                                    _Utils.ling(this@FullscreenActivity, R.raw.morning)
-                                } else if (now.hour == 14 && now.minite == 55) {
-                                    _Utils.ling(this@FullscreenActivity, R.raw.bye)
+                                if (now.hour == 8 && now.minite == 50) {
+                                    if(weekday==6){
+                                        _Utils.speaker(this@FullscreenActivity, "早上好，今天星期五！", 1.0f, 1.0f)
+                                    }else{
+                                        _Utils.ling(this@FullscreenActivity, R.raw.morning)
+                                    }
+                                } else if (now.hour == 14 && now.minite == 50) {
+                                    if(weekday==6){
+                                        _Utils.speaker(this@FullscreenActivity, "今天星期五，周一再见！", 1.0f, 1.0f)
+                                    }else{
+                                        _Utils.ling(this@FullscreenActivity, R.raw.bye)
+                                    }
                                 }
                             }
                         }
@@ -322,14 +352,6 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                         sexDate = DateTime(result.toString().toLong())
                         refreshSexDays()
                     }
-                    -1 -> {
-                    }
-                    -2 -> {
-                    }
-                    -3 -> {
-                    }
-                    -4 -> {
-                    }
                 }
                 Looper.prepare()
                 Toast.makeText(this@FullscreenActivity, "更新完毕", Toast.LENGTH_LONG).show()
@@ -346,7 +368,7 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
      * 设置行房天数。
      */
     private fun refreshSexDays() {
-        uiThreadHandler.post { // 计时计日
+        runOnUiThread{
             var text = "0"
             var progress = 0
             val progressMax = 24 * 60
@@ -417,6 +439,37 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
+    private lateinit var serverSocket:ServerSocket
+    fun startSocket(){
+        Thread {
+            try {
+                serverSocket = ServerSocket(8000)
+                while (true) {
+                    var s = serverSocket.accept()
+                    var dis = DataInputStream(s.getInputStream())
+                    when (dis.readInt()) {
+                        0->{
+
+                        }
+                        1 -> {
+                            // 滴答声
+                                isNock=!isNock
+                        }
+                        2 -> {
+                            //  开启
+                            serverSocket.close()
+                            this.finish()
+                            startActivity(Intent(this,FundMonitorActivity::class.java))
+                        }
+                    }
+                    dis.close();
+                    s.close()
+                }
+            } catch (e: Exception) {
+                _Utils.log2file("err","socket运行异常",e.message)
+            }
+        }.start()
+    }
     companion object {
         private const val UI_ANIMATION_DELAY = 300
     }

@@ -35,8 +35,9 @@ object _SinaStockUtils {
     private fun e(log: Any) {
         Log.e("wangsc", log.toString())
     }
+
     fun getStockInfoList(stocks: List<Position>, onLoadStockInfoListListener: OnLoadStockInfoListListener) {
-        Thread(Runnable {
+        Thread {
             var isStock = true
             var totalProfit = 0.0
             var totalAmount = 0.0
@@ -45,7 +46,7 @@ object _SinaStockUtils {
             try {
                 for (stock in stocks) {
                     val url = "https://hq.sinajs.cn/list=" + stock.exchange + stock.code
-                    val client = OkHttpClient()
+                    val client = _Session.okHttpClient
 
                     val request = Request.Builder().url(url).build()
                     val response = client.newCall(request).execute()
@@ -91,7 +92,6 @@ object _SinaStockUtils {
                         stockInfoList.add(info)
                     } else {
                         runlog2file("获取数据失败...")
-                        return@Runnable
                     }
                 }
                 var averageProfit = 0.0
@@ -100,15 +100,16 @@ object _SinaStockUtils {
                 } else {
                     totalProfit
                 }
-                if (onLoadStockInfoListListener != null) {
-                    if (stocks.size != 0) onLoadStockInfoListListener.onLoadFinished(stockInfoList, totalProfit, averageProfit, time) else onLoadStockInfoListListener.onLoadFinished(stockInfoList, 0.0, 0.0, time)
-                }
-                //                    return stockInfoList;
+
+                if (stocks.size != 0)
+                    onLoadStockInfoListListener.onLoadFinished(stockInfoList, totalProfit, averageProfit, time)
+                else
+                    onLoadStockInfoListListener.onLoadFinished(stockInfoList, 0.0, 0.0, time)
             } catch (e: Exception) {
-                _Utils.error2file("SinaStockUtils.getStockInfoList  error: ", e.message)
+//                _Utils.error2file("SinaStockUtils.getStockInfoList  error: ", e.message)
                 Log.e("wangsc", e.message)
             }
-        }).start()
+        }.start()
     }
 
     fun getStockInfo(info: StockInfo, onLoadStockInfoListener: OnLoadStockInfoListener) {
@@ -116,7 +117,7 @@ object _SinaStockUtils {
             var time = ""
             try {
                 val url = "https://hq.sinajs.cn/list=" + info.exchange + info.code
-                val client = OkHttpClient()
+                val client = _Session.okHttpClient
                 val request = Request.Builder().url(url).build()
                 val response = client.newCall(request).execute()
                 if (response.isSuccessful) {
@@ -132,7 +133,7 @@ object _SinaStockUtils {
                 onLoadStockInfoListener.onLoadFinished(info, time)
                 //                    return stockInfoList;
             } catch (e: Exception) {
-                _Utils.error2file("SinaStockUtils.getStockInfo  error: ", e.message)
+//                _Utils.error2file("SinaStockUtils.getStockInfo  error: ", e.message)
                 Log.e("wangsc", e.message)
             }
         }.start()
