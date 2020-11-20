@@ -11,7 +11,6 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.media.AudioManager
-import android.media.MediaPlayer
 import android.media.SoundPool
 import android.os.*
 import android.util.Log
@@ -22,28 +21,30 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.wang17.myclock.R
 import com.wang17.myclock.callback.CloudCallback
+import com.wang17.myclock.callback.ExchangeEvent
 import com.wang17.myclock.database.Position
 import com.wang17.myclock.database.Setting
 import com.wang17.myclock.database.Setting.KEYS
 import com.wang17.myclock.database.utils.DataContext
+import com.wang17.myclock.isAlarmRunning
 import com.wang17.myclock.model.DateTime
 import com.wang17.myclock.model.Lunar
-import com.wang17.myclock.model.StockInfo
+import com.wang17.myclock.targetTimeInMillis
+import com.wang17.myclock.utils.AudioUtils
 import com.wang17.myclock.utils.LightSensorUtil
 import com.wang17.myclock.utils._CloudUtils
-import com.wang17.myclock.utils._SinaStockUtils
 import com.wang17.myclock.utils._Utils
 import kotlinx.android.synthetic.main.activity_fullscreen.*
+import kotlinx.android.synthetic.main.activity_fullscreen.image_volumn
+import kotlinx.android.synthetic.main.activity_fullscreen.textView_log
 import kotlinx.android.synthetic.main.activity_fund_monitor.*
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import java.io.DataInputStream
 import java.net.ServerSocket
-import java.text.DecimalFormat
-import java.time.DayOfWeek
 import java.util.*
 import java.util.concurrent.CountDownLatch
-import kotlinx.android.synthetic.main.activity_fullscreen.imageView_warning as imageView_warning1
-import kotlinx.android.synthetic.main.activity_fullscreen.image_volumn as image_volumn1
-import kotlinx.android.synthetic.main.activity_fullscreen.textView_log as textView_log1
+import kotlin.concurrent.thread
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -94,9 +95,18 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
     }
 
 
-    fun toFundMonitor(){
-        this.finish()
-        startActivity(Intent(this,FundMonitorActivity::class.java))
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun toFundMonitor(event:ExchangeEvent) {
+        try {
+            serverSocket.close()
+            this.finish()
+            startActivity(Intent(this, FundMonitorActivity::class.java))
+        } catch (e: Exception) {
+            runOnUiThread {
+                textView_log.visibility = View.VISIBLE
+                textView_log.text = e.message
+            }
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -105,6 +115,14 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         setContentView(R.layout.activity_fullscreen)
 
         startSocket()
+
+        /**
+         * 设置音量
+         */
+        val audioUtils = AudioUtils.getInstance(this)
+        val volume = (audioUtils.mediaMaxVolume*0.8).toInt()
+        if (audioUtils.mediaVolume < volume)
+            audioUtils.mediaVolume = volume
 
         dataContext = DataContext(this)
         tv_time.setOnLongClickListener(OnLongClickListener {
@@ -180,96 +198,42 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
             override fun run() {
                 val now = DateTime()
 
-                val startDate = DateTime()
-                startDate.set(Calendar.HOUR_OF_DAY,9)
-                startDate.set(Calendar.MINUTE,25)
-                startDate.set(Calendar.SECOND,0)
-                val endDate = DateTime()
-                endDate.set(Calendar.HOUR_OF_DAY,15)
-                endDate.set(Calendar.MINUTE,0)
-                endDate.set(Calendar.SECOND,0)
+                val startDate1 = DateTime()
+                startDate1.set(Calendar.HOUR_OF_DAY, 9)
+                startDate1.set(Calendar.MINUTE, 25)
+                startDate1.set(Calendar.SECOND, 0)
+                val endDate1 = DateTime()
+                endDate1.set(Calendar.HOUR_OF_DAY, 11)
+                endDate1.set(Calendar.MINUTE, 30)
+                endDate1.set(Calendar.SECOND, 0)
+                val startDate2 = DateTime()
+                startDate2.set(Calendar.HOUR_OF_DAY, 13)
+                startDate2.set(Calendar.MINUTE, 0)
+                startDate2.set(Calendar.SECOND, 0)
+                val endDate2 = DateTime()
+                endDate2.set(Calendar.HOUR_OF_DAY, 15)
+                endDate2.set(Calendar.MINUTE, 0)
+                endDate2.set(Calendar.SECOND, 0)
 
                 val weekday = now.get((Calendar.DAY_OF_WEEK))
-                if (weekday != 7 && weekday != 1&&(now.timeInMillis>startDate.timeInMillis&&now.timeInMillis<endDate.timeInMillis)) {
+                if (weekday != 7 && weekday != 1 && (now.timeInMillis > startDate1.timeInMillis && now.timeInMillis < endDate1.timeInMillis||now.timeInMillis > startDate2.timeInMillis && now.timeInMillis < endDate2.timeInMillis)) {
                     toFundMonitor()
                     return
                 }
-/*
-                runOnUiThread {
-                    if(isFundMonitor){
-                        pc_second.visibility = View.INVISIBLE
-                    }else{
-                        pc_second.visibility = View.VISIBLE
-                        tv_day.setTextColor(Color.WHITE)
-                    }
+
+                if (isAlarmRunning && now.timeInMillis >= targetTimeInMillis) {
+                    _Utils.ling(this@FullscreenActivity,R.raw.ding)
+//                    _Utils.speaker(this@FullscreenActivity, "时间到", 1.0f, 1.0f)
+                    isAlarmRunning = false
                 }
 
-                if (isFundMonitor) {
-                    _SinaStockUtils.getStockInfoList(positions, object : _SinaStockUtils.OnLoadStockInfoListListener {
-                        override fun onLoadFinished(stockInfoList: List<StockInfo>, totalProfit: Double, averageProfit: Double, time: String) {
-                            try {
-                                val size = stockInfoList.size
-                                e("$size , $totalProfit , $averageProfit")
-                                if (stockInfoList.size == 0) {
-                                    return
-                                }
-                                runOnUiThread(Runnable {
-                                    tv_day.text = DecimalFormat("0.00").format(averageProfit * 100)
-                                    if (averageProfit > 0) {
-                                        tv_day.setTextColor(Color.RED)
-                                    } else if (averageProfit == 0.0) {
-                                        tv_day.setTextColor(Color.WHITE)
-                                    } else {
-                                        tv_day.setTextColor(Color.CYAN)
-                                    }
 
-                                    val aa = time.split(":")
-                                    val now = DateTime()
-                                    val tradeTime = DateTime(now.year, now.month, now.day, aa[0].toInt(), aa[1].toInt(), aa[2].toInt())
-                                    if (now.timeInMillis - tradeTime.timeInMillis > 10000) {
-                                        imageView_warning.visibility = View.VISIBLE
-                                    } else {
-                                        imageView_warning.visibility = View.INVISIBLE
-                                    }
-
-                                })
-                                var speakMsg = ""
-                                //region 股票平均盈利
-                                val msgS = DecimalFormat("0.00").format(averageProfit * 100)
-                                Log.e("wangsc", "averageTotalProfitS: $msgS")
-                                if (Math.abs(averageProfit - preAverageProfit) * 100 > (1.0 / size)) {
-                                    preAverageProfit = averageProfit
-                                    speakMsg += msgS
-                                }
-                                if (!speakMsg.isEmpty() && image_volumn.visibility == View.VISIBLE) {
-                                    var pitch = 1.0f
-                                    var speech = 1.2f
-                                    if (averageProfit < 0) {
-                                        pitch = 0.1f
-                                        speech = 0.8f
-                                    }
-                                    _Utils.speaker(getApplicationContext(), speakMsg, pitch, speech)
-                                }
-                            } catch (e: Exception) {
-                                _Utils.printException(this@FullscreenActivity, e)
-
-                                textView_log.visibility = View.VISIBLE
-                                textView_log.text = e.message
-
-//                                timer.cancel()
-                                Log.e("wangsc", e.message)
-                                e.printStackTrace()
-                            }
-                        }
-                    })
-                }
-*/
                 runOnUiThread {
                     try {
                         val lunar = Lunar(now)
                         val day = now.day.toString() + ""
 //                        if (!isFundMonitor)
-                            tv_day.text = day
+                        tv_day.text = day
                         tv_lunar_month.setText(lunar.chinaMonthString)
                         tv_lunar_day.setText(lunar.chinaDayString)
                         tv_time.text = now.toShortTimeString()
@@ -315,24 +279,25 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                             }
                             if (weekday != 7 && weekday != 1) {
                                 if (now.hour == 8 && now.minite == 50) {
-                                    if(weekday==6){
+                                    if (weekday == 6) {
                                         _Utils.speaker(this@FullscreenActivity, "早上好，今天星期五！", 1.0f, 1.0f)
-                                    }else{
+                                    } else {
                                         _Utils.ling(this@FullscreenActivity, R.raw.morning)
                                     }
                                 } else if (now.hour == 14 && now.minite == 50) {
-                                    if(weekday==6){
+                                    if (weekday == 6) {
                                         _Utils.speaker(this@FullscreenActivity, "今天星期五，周一再见！", 1.0f, 1.0f)
-                                    }else{
+                                    } else {
                                         _Utils.ling(this@FullscreenActivity, R.raw.bye)
                                     }
                                 }
                             }
                         }
                     } catch (e: Exception) {
-
-                        textView_log.visibility = View.VISIBLE
-                        textView_log.text = e.message
+runOnUiThread {
+    textView_log.visibility = View.VISIBLE
+    textView_log.text = e.message
+}
 
 //                        timer.cancel()
                         e.printStackTrace()
@@ -368,7 +333,7 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
      * 设置行房天数。
      */
     private fun refreshSexDays() {
-        runOnUiThread{
+        runOnUiThread {
             var text = "0"
             var progress = 0
             val progressMax = 24 * 60
@@ -439,37 +404,6 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-    private lateinit var serverSocket:ServerSocket
-    fun startSocket(){
-        Thread {
-            try {
-                serverSocket = ServerSocket(8000)
-                while (true) {
-                    var s = serverSocket.accept()
-                    var dis = DataInputStream(s.getInputStream())
-                    when (dis.readInt()) {
-                        0->{
-
-                        }
-                        1 -> {
-                            // 滴答声
-                                isNock=!isNock
-                        }
-                        2 -> {
-                            //  开启
-                            serverSocket.close()
-                            this.finish()
-                            startActivity(Intent(this,FundMonitorActivity::class.java))
-                        }
-                    }
-                    dis.close();
-                    s.close()
-                }
-            } catch (e: Exception) {
-                _Utils.log2file("err","socket运行异常",e.message)
-            }
-        }.start()
-    }
     companion object {
         private const val UI_ANIMATION_DELAY = 300
     }
