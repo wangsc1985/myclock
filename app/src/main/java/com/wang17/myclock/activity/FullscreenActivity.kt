@@ -20,6 +20,8 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.wang17.myclock.R
+import com.wang17.myclock.SocketService
+import com.wang17.myclock.callback.ClocknockEvent
 import com.wang17.myclock.callback.CloudCallback
 import com.wang17.myclock.callback.ExchangeEvent
 import com.wang17.myclock.database.Position
@@ -37,14 +39,11 @@ import com.wang17.myclock.utils._Utils
 import kotlinx.android.synthetic.main.activity_fullscreen.*
 import kotlinx.android.synthetic.main.activity_fullscreen.image_volumn
 import kotlinx.android.synthetic.main.activity_fullscreen.textView_log
-import kotlinx.android.synthetic.main.activity_fund_monitor.*
+import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
-import java.io.DataInputStream
-import java.net.ServerSocket
 import java.util.*
 import java.util.concurrent.CountDownLatch
-import kotlin.concurrent.thread
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -92,13 +91,17 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
     override fun onResume() {
         super.onResume()
         startTimer()
+        _Utils.checkSocketService(this,8000)
     }
 
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    fun toFundMonitor(event:ExchangeEvent) {
+    fun ExchangeActivity(event:ExchangeEvent){
+        toFundMonitor()
+    }
+
+    fun toFundMonitor() {
         try {
-            serverSocket.close()
             this.finish()
             startActivity(Intent(this, FundMonitorActivity::class.java))
         } catch (e: Exception) {
@@ -109,12 +112,16 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun clocknock(event:ClocknockEvent){
+        isNock=!isNock
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_fullscreen)
-
-        startSocket()
+        EventBus.getDefault().register(this)
 
         /**
          * 设置音量
@@ -183,7 +190,6 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         })
         latch.await()
 
-
         var ispeak = dataContext.getSetting(Setting.KEYS.is_stock_speak, false).boolean
         if (ispeak) {
             image_volumn.visibility = View.VISIBLE
@@ -191,6 +197,11 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
             image_volumn.visibility = View.GONE
         }
 
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        EventBus.getDefault().unregister(this)
     }
 
     private fun startTimer() {

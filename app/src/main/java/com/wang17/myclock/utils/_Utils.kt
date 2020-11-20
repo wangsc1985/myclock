@@ -17,8 +17,10 @@ import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import com.wang17.myclock.SocketService
 import com.wang17.myclock.model.DateTime
 import java.io.*
+import java.net.*
 import java.util.*
 
 /**
@@ -26,6 +28,73 @@ import java.util.*
  */
 object _Utils {
 
+    fun checkSocketService(context:Context, port:Int){
+        val socketServiceIsRun = isRunService(context, SocketService::class.java.name)
+        val portCanUse = _Utils.isPortAvailable(port)
+        if (portCanUse) {
+            val intent = Intent(context, SocketService::class.java)
+            if (socketServiceIsRun) {
+                context.stopService(intent)
+            }
+            context.startService(Intent(context, SocketService::class.java))
+        }
+    }
+
+    fun getIp(): String {
+        try {
+            val enNetI = NetworkInterface.getNetworkInterfaces()
+            while (enNetI.hasMoreElements()) {
+                val netI = enNetI.nextElement()
+                val enumIpAddr = netI.inetAddresses
+                while (enumIpAddr.hasMoreElements()) {
+                    val inetAddress = enumIpAddr.nextElement()
+                    if (inetAddress is Inet4Address && !inetAddress.isLoopbackAddress) {
+                        return inetAddress.hostAddress
+                    }
+                }
+            }
+        } catch (e: SocketException) {
+            e.printStackTrace()
+        }
+        return "0.0.0.0"
+    }
+    @Throws(java.lang.Exception::class)
+    private fun bindPort(ip: String, port: Int) {
+        //创建一个socket对象
+        val s = Socket()
+        //对指定端口进行绑定，如果绑定成功则未被占用
+        s.bind(InetSocketAddress(ip, port))
+        s.close()
+    }
+    /**
+     * 如果端口未被占用，返回true
+     */
+    fun isPortAvailable(port: Int): Boolean {
+        return try {
+            //调用bindport函数对本机指定端口进行验证
+            val ip = getIp()
+            bindPort(ip, port)
+            true
+        } catch (e: java.lang.Exception) {
+            false
+        }
+    }
+    /**
+     * 判断服务是否在运行
+     * @param context
+     * @param serviceName
+     * @return
+     * 服务名称为全路径 例如com.ghost.WidgetUpdateService
+     */
+    fun isRunService(context: Context, serviceName: String): Boolean {
+        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        for (service in manager.getRunningServices(Int.MAX_VALUE)) {
+            if (serviceName == service.service.className) {
+                return true
+            }
+        }
+        return false
+    }
     /**
      * 获取电源锁，保持该服务在屏幕熄灭时仍然获取CPU时，保持运行
      *

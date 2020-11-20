@@ -8,10 +8,10 @@ class Client {
         @JvmStatic
         fun main(args: Array<String>) {
             try {
-                var s = Socket("127.0.0.1",8000)
+                var s = Socket("192.168.0.107",8000)
                 var os = s.getOutputStream()
                 val dos = DataOutputStream(os)
-                dos.writeInt(1)
+                dos.writeInt(3)
                 dos.flush()
                 dos.close()
                 s.close()

@@ -13,7 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true">
         <service
-            android:name=".StockService"
+            android:name=".SocketService"
             android:enabled="true"
             android:exported="true"></service>
         <!-- <activity -->
@@ -40,6 +40,7 @@
         </activity>
         <activity
             android:name=".activity.FundMonitorActivity"
+            android:launchMode="singleTask"
             android:theme="@style/FullscreenTheme" />
     </application>
 

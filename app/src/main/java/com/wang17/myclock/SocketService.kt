@@ -3,7 +3,7 @@ package com.wang17.myclock
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import com.wang17.myclock.callback.ClocKnockEvent
+import com.wang17.myclock.callback.ClocknockEvent
 import com.wang17.myclock.callback.ExchangeEvent
 import com.wang17.myclock.model.DateTime
 import com.wang17.myclock.utils._Utils
@@ -12,7 +12,7 @@ import java.io.DataInputStream
 import java.net.ServerSocket
 import java.util.*
 
-class StockService : Service() {
+class SocketService : Service() {
 
     override fun onBind(intent: Intent): IBinder {
         TODO("Return the communication channel to the service.")
@@ -20,12 +20,11 @@ class StockService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        EventBus.getDefault().register(this)
+        startSocket()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        EventBus.getDefault().unregister(this)
     }
 
     private lateinit var serverSocket: ServerSocket
@@ -42,7 +41,7 @@ class StockService : Service() {
                         }
                         1 -> {
                             // 滴答声
-                            EventBus.getDefault().post(ClocKnockEvent())
+                            EventBus.getDefault().post(ClocknockEvent())
                         }
                         2 -> {
                             //  开启stock activity
