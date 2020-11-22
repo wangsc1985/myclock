@@ -38,7 +38,9 @@ import com.wang17.myclock.utils._CloudUtils
 import com.wang17.myclock.utils._Utils
 import kotlinx.android.synthetic.main.activity_fullscreen.*
 import kotlinx.android.synthetic.main.activity_fullscreen.image_volumn
+import kotlinx.android.synthetic.main.activity_fullscreen.layout_root
 import kotlinx.android.synthetic.main.activity_fullscreen.textView_log
+import kotlinx.android.synthetic.main.activity_fund_monitor.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -91,12 +93,11 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
     override fun onResume() {
         super.onResume()
         startTimer()
-        _Utils.checkSocketService(this,8000)
+        _Utils.checkSocketService(this, 8000)
     }
 
-
     @Subscribe(threadMode = ThreadMode.MAIN)
-    fun ExchangeActivity(event:ExchangeEvent){
+    fun ExchangeActivity(event: ExchangeEvent) {
         toFundMonitor()
     }
 
@@ -113,8 +114,8 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    fun clocknock(event:ClocknockEvent){
-        isNock=!isNock
+    fun clocknock(event: ClocknockEvent) {
+        isNock = !isNock
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -127,7 +128,7 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
          * 设置音量
          */
         val audioUtils = AudioUtils.getInstance(this)
-        val volume = (audioUtils.mediaMaxVolume*0.8).toInt()
+        val volume = (audioUtils.mediaMaxVolume * 0.8).toInt()
         if (audioUtils.mediaVolume < volume)
             audioUtils.mediaVolume = volume
 
@@ -160,8 +161,8 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         /**
          *
          */
-        frameLayout.setOnClickListener({ isNock = !isNock })
-        frameLayout.setOnLongClickListener {
+        layout_root.setOnClickListener({ isNock = !isNock })
+        layout_root.setOnLongClickListener {
             toFundMonitor()
             true
         }
@@ -227,15 +228,31 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                 endDate2.set(Calendar.SECOND, 0)
 
                 val weekday = now.get((Calendar.DAY_OF_WEEK))
-                if (weekday != 7 && weekday != 1 && (now.timeInMillis > startDate1.timeInMillis && now.timeInMillis < endDate1.timeInMillis||now.timeInMillis > startDate2.timeInMillis && now.timeInMillis < endDate2.timeInMillis)) {
+                if (weekday != 7 && weekday != 1 && (now.timeInMillis > startDate1.timeInMillis && now.timeInMillis < endDate1.timeInMillis || now.timeInMillis > startDate2.timeInMillis && now.timeInMillis < endDate2.timeInMillis)) {
                     toFundMonitor()
                     return
                 }
 
-                if (isAlarmRunning && now.timeInMillis >= targetTimeInMillis) {
-                    _Utils.ling(this@FullscreenActivity,R.raw.ding)
-//                    _Utils.speaker(this@FullscreenActivity, "时间到", 1.0f, 1.0f)
-                    isAlarmRunning = false
+                e("is alrm running : $isAlarmRunning")
+                try {
+                    if (isAlarmRunning) {
+                        runOnUiThread {
+                            layout_root.setBackgroundResource(R.color.alarm_color)
+                        }
+                        if (now.timeInMillis >= targetTimeInMillis) {
+//                            _Utils.ling(this@FullscreenActivity, R.raw.ding)
+                            _Utils.speaker(this@FullscreenActivity,getString(R.string.speaker_alarm),1.0f,1.0f)
+                            isAlarmRunning = false
+                            runOnUiThread {
+                                layout_root.setBackgroundResource(R.color.b)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        textView_log.visibility = View.VISIBLE
+                        textView_log.text = e.message
+                    }
                 }
 
 
@@ -256,11 +273,11 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                         /**
                          * 颜色
                          */
-                        if (lunar.day == 15 || lunar.day == 1) {
-                            frameLayout.setBackgroundResource(R.color.a)
-                        } else {
-                            frameLayout.setBackgroundResource(R.color.b)
-                        }
+//                        if (lunar.day == 15 || lunar.day == 1) {
+//                            layout_root.setBackgroundResource(R.color.a)
+//                        } else {
+//                            layout_root.setBackgroundResource(R.color.b)
+//                        }
                         if (now[Calendar.DAY_OF_WEEK] == 6) {
                             tv_week.setTextColor(Color.RED)
                         } else {
@@ -305,10 +322,10 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                             }
                         }
                     } catch (e: Exception) {
-runOnUiThread {
-    textView_log.visibility = View.VISIBLE
-    textView_log.text = e.message
-}
+                        runOnUiThread {
+                            textView_log.visibility = View.VISIBLE
+                            textView_log.text = e.message
+                        }
 
 //                        timer.cancel()
                         e.printStackTrace()
