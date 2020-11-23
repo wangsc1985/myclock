@@ -161,15 +161,23 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         /**
          *
          */
-        layout_root.setOnClickListener({ isNock = !isNock })
+        layout_root.setOnClickListener {
+            SocketService.clock(this)
+        }
         layout_root.setOnLongClickListener {
             toFundMonitor()
             true
         }
-        tv_time.setOnClickListener(View.OnClickListener { isNock = !isNock })
-        tv_markday.setOnClickListener(View.OnClickListener { isNock = !isNock })
-        tv_day.setOnClickListener(View.OnClickListener { isNock = !isNock })
-        tv_markday.setOnLongClickListener(OnLongClickListener { true })
+        tv_time.setOnClickListener {
+            SocketService.clock(this)
+        }
+        tv_markday.setOnClickListener {
+            SocketService.clock(this)
+        }
+        tv_day.setOnClickListener {
+            SocketService.clock(this)
+        }
+
         loadSexdateFromCloud()
 
         val latch = CountDownLatch(1)
@@ -228,7 +236,9 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                 endDate2.set(Calendar.SECOND, 0)
 
                 val weekday = now.get((Calendar.DAY_OF_WEEK))
-                if (weekday != 7 && weekday != 1 && (now.timeInMillis > startDate1.timeInMillis && now.timeInMillis < endDate1.timeInMillis || now.timeInMillis > startDate2.timeInMillis && now.timeInMillis < endDate2.timeInMillis)) {
+                if (weekday != 7 && weekday != 1
+                        && (now.timeInMillis > startDate1.timeInMillis && now.timeInMillis < endDate1.timeInMillis
+                                || now.timeInMillis > startDate2.timeInMillis && now.timeInMillis < endDate2.timeInMillis)) {
                     toFundMonitor()
                     return
                 }
@@ -241,7 +251,7 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                         }
                         if (now.timeInMillis >= targetTimeInMillis) {
 //                            _Utils.ling(this@FullscreenActivity, R.raw.ding)
-                            _Utils.speaker(this@FullscreenActivity,getString(R.string.speaker_alarm),1.0f,1.0f)
+                            _Utils.speaker(this@FullscreenActivity,getString(R.string.speaker_alarm),1.0f,0.8f)
                             isAlarmRunning = false
                             runOnUiThread {
                                 layout_root.setBackgroundResource(R.color.b)

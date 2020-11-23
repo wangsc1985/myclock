@@ -1,6 +1,7 @@
 package com.wang17.myclock
 
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import com.wang17.myclock.callback.ClocknockEvent
@@ -49,12 +50,7 @@ class SocketService : Service() {
                         }
                         3 -> {
                             // 开始计时
-                            var now = DateTime()
-                            now.add(Calendar.MINUTE, 30)
-                            targetTimeInMillis = now.timeInMillis
-                            isAlarmRunning = true
-                            _Utils.ling(this,R.raw.bi)
-//                            _Utils.speaker(this, "计时开始", 1.0f, 1.0f)
+                            clock(applicationContext)
                         }
                     }
                     dis.close();
@@ -66,4 +62,15 @@ class SocketService : Service() {
         }.start()
     }
 
+
+    companion object{
+        fun clock(context:Context){
+            var now = DateTime()
+            now.add(Calendar.MINUTE, 30)
+            targetTimeInMillis = now.timeInMillis
+            isAlarmRunning = true
+            _Utils.ling(context,R.raw.bi)
+//                            _Utils.speaker(this, "计时开始", 1.0f, 1.0f)
+        }
+    }
 }
