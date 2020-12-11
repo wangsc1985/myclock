@@ -53,7 +53,7 @@ class SocketService : Service() {
                             clock(applicationContext)
                         }
                     }
-                    dis.close();
+                    dis.close()
                     s.close()
                 }
             } catch (e: Exception) {
@@ -65,6 +65,7 @@ class SocketService : Service() {
 
     companion object{
         fun clock(context:Context){
+            e("计时开始")
             var now = DateTime()
             now.add(Calendar.MINUTE, 30)
             targetTimeInMillis = now.timeInMillis

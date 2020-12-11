@@ -18,10 +18,12 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import com.wang17.myclock.SocketService
+import com.wang17.myclock.e
 import com.wang17.myclock.model.DateTime
 import java.io.*
 import java.net.*
 import java.util.*
+import kotlin.jvm.Throws
 
 /**
  * Created by 阿弥陀佛 on 2016/10/18.
@@ -112,7 +114,7 @@ object _Utils {
             val wakeLock = pm.newWakeLock(PowerManager, context.javaClass.canonicalName)
             if (null != wakeLock) {
                 wakeLock.acquire()
-                Log.e("wangsc", "锁定唤醒锁: $wakeLock")
+                e("锁定唤醒锁: $wakeLock")
                 return wakeLock
             }
         } catch (e: java.lang.Exception) {
@@ -126,7 +128,7 @@ object _Utils {
     fun releaseWakeLock(context: Context?, wakeLock: WakeLock?) {
         var wakeLock = wakeLock
         try {
-            Log.e("wangsc", "解除唤醒锁: $wakeLock")
+            e( "解除唤醒锁: $wakeLock")
             if (null != wakeLock && wakeLock.isHeld) {
                 wakeLock.release()
                 wakeLock = null
@@ -157,11 +159,11 @@ object _Utils {
         val packageName = "com.wangsc.lovehome"
         val appProcesses = activityManager.runningAppProcesses
         if (appProcesses == null) {
-            Log.e("wangsc", "null")
+            e( "null")
             return false
         }
         for (appProcess in appProcesses) {
-            Log.e("wangsc", appProcess.processName)
+            e( appProcess.processName)
             if (appProcess.processName == packageName) {
                 return true
             }
@@ -297,8 +299,10 @@ object _Utils {
             writer.newLine()
             writer.write(item)
             writer.newLine()
-            writer.write(message ?: "空")
-            writer.newLine()
+            if(message!=null){
+                writer.write(message ?: "")
+                writer.newLine()
+            }
             writer.flush()
             writer.close()
         } catch (e: IOException) {

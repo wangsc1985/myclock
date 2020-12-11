@@ -48,15 +48,14 @@ import java.util.*
 import java.util.concurrent.CountDownLatch
 
 /**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
+ * An example full-screen activity that shows and hides the system UI (i.e.status bar and navigation/system bar) with user interaction.
  */
 class FullscreenActivity : AppCompatActivity(), SensorEventListener {
     val mHideHandler: Handler
     var mainReciver: MainReciver
     var isNock: Boolean
     var isLoaded: Boolean
-    var timer: Timer
+    lateinit var timer: Timer
     var lightLevel: Float
     var sexDate: DateTime? = null
     private var preAverageProfit = 0.0
@@ -86,11 +85,11 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         isNock = false
         isLoaded = false
         mHideHandler = Handler()
-        timer = Timer()
         lightLevel = 0f
     }
 
     override fun onResume() {
+        e("fullscreen onResume")
         super.onResume()
         startTimer()
         _Utils.checkSocketService(this, 8000)
@@ -120,6 +119,7 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
+        e("fullscreen on create")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_fullscreen)
         EventBus.getDefault().register(this)
@@ -209,125 +209,56 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
     }
 
     override fun onDestroy() {
+        e("fullscreen onDestroy")
         super.onDestroy()
         EventBus.getDefault().unregister(this)
     }
 
     private fun startTimer() {
-        timer.schedule(object : TimerTask() {
-            override fun run() {
-                val now = DateTime()
+        try {
+            timer = Timer()
+            timer.schedule(object : TimerTask() {
+                override fun run() {
+                    val now = DateTime()
 
-                val startDate1 = DateTime()
-                startDate1.set(Calendar.HOUR_OF_DAY, 9)
-                startDate1.set(Calendar.MINUTE, 25)
-                startDate1.set(Calendar.SECOND, 0)
-                val endDate1 = DateTime()
-                endDate1.set(Calendar.HOUR_OF_DAY, 11)
-                endDate1.set(Calendar.MINUTE, 30)
-                endDate1.set(Calendar.SECOND, 0)
-                val startDate2 = DateTime()
-                startDate2.set(Calendar.HOUR_OF_DAY, 13)
-                startDate2.set(Calendar.MINUTE, 0)
-                startDate2.set(Calendar.SECOND, 0)
-                val endDate2 = DateTime()
-                endDate2.set(Calendar.HOUR_OF_DAY, 15)
-                endDate2.set(Calendar.MINUTE, 0)
-                endDate2.set(Calendar.SECOND, 0)
+                    e("ccccccccccccccccccc")
+                    val startDate1 = DateTime()
+                    startDate1.set(Calendar.HOUR_OF_DAY, 9)
+                    startDate1.set(Calendar.MINUTE, 25)
+                    startDate1.set(Calendar.SECOND, 0)
+                    val endDate1 = DateTime()
+                    endDate1.set(Calendar.HOUR_OF_DAY, 11)
+                    endDate1.set(Calendar.MINUTE, 30)
+                    endDate1.set(Calendar.SECOND, 0)
+                    val startDate2 = DateTime()
+                    startDate2.set(Calendar.HOUR_OF_DAY, 13)
+                    startDate2.set(Calendar.MINUTE, 0)
+                    startDate2.set(Calendar.SECOND, 0)
+                    val endDate2 = DateTime()
+                    endDate2.set(Calendar.HOUR_OF_DAY, 15)
+                    endDate2.set(Calendar.MINUTE, 0)
+                    endDate2.set(Calendar.SECOND, 0)
 
-                val weekday = now.get((Calendar.DAY_OF_WEEK))
-                if (weekday != 7 && weekday != 1
-                        && (now.timeInMillis > startDate1.timeInMillis && now.timeInMillis < endDate1.timeInMillis
-                                || now.timeInMillis > startDate2.timeInMillis && now.timeInMillis < endDate2.timeInMillis)) {
-                    toFundMonitor()
-                    return
-                }
-
-                e("is alrm running : $isAlarmRunning")
-                try {
-                    if (isAlarmRunning) {
-                        runOnUiThread {
-                            layout_root.setBackgroundResource(R.color.alarm_color)
-                        }
-                        if (now.timeInMillis >= targetTimeInMillis) {
-//                            _Utils.ling(this@FullscreenActivity, R.raw.ding)
-                            _Utils.speaker(this@FullscreenActivity,getString(R.string.speaker_alarm),1.0f,0.8f)
-                            isAlarmRunning = false
-                            runOnUiThread {
-                                layout_root.setBackgroundResource(R.color.b)
-                            }
-                        }
+                    val weekday = now.get((Calendar.DAY_OF_WEEK))
+                    if (weekday != 7 && weekday != 1
+                            && (now.timeInMillis > startDate1.timeInMillis && now.timeInMillis < endDate1.timeInMillis
+                                    || now.timeInMillis > startDate2.timeInMillis && now.timeInMillis < endDate2.timeInMillis)) {
+                        toFundMonitor()
+                        return
                     }
-                } catch (e: Exception) {
-                    runOnUiThread {
-                        textView_log.visibility = View.VISIBLE
-                        textView_log.text = e.message
-                    }
-                }
 
-
-                runOnUiThread {
+//                e("is alrm running : $isAlarmRunning")
                     try {
-                        val lunar = Lunar(now)
-                        val day = now.day.toString() + ""
-//                        if (!isFundMonitor)
-                        tv_day.text = day
-                        tv_lunar_month.setText(lunar.chinaMonthString)
-                        tv_lunar_day.setText(lunar.chinaDayString)
-                        tv_time.text = now.toShortTimeString()
-                        tv_week.setText(now.weekDayStr)
-                        pc_second.setProgress(if (now.second == 0) 60 else now.second)
-                        if (isNock && isLoaded) {
-                            soundPool!!.play(1, 1f, 1f, 0, 0, 1f)
-                        }
-                        /**
-                         * 颜色
-                         */
-//                        if (lunar.day == 15 || lunar.day == 1) {
-//                            layout_root.setBackgroundResource(R.color.a)
-//                        } else {
-//                            layout_root.setBackgroundResource(R.color.b)
-//                        }
-                        if (now[Calendar.DAY_OF_WEEK] == 6) {
-                            tv_week.setTextColor(Color.RED)
-                        } else {
-                            tv_week.setTextColor(Color.WHITE)
-                        }
-                        /**
-                         * 每月初一、八、十四、十五、十八、二十三、二十四、二十八、二十九、三十
-                         */
-                        /**
-                         * 每月初一、八、十四、十五、十八、二十三、二十四、二十八、二十九、三十
-                         */
-                        if (lunar.day == 1 || lunar.day == 8 || lunar.day == 14 || lunar.day == 15 || lunar.day == 18 || lunar.day == 23 || lunar.day == 24 || lunar.day == 28 || lunar.day == 29 || lunar.day == 30) {
-                            tv_lunar_day.setTextColor(Color.RED)
-                        } else {
-                            tv_lunar_day.setTextColor(Color.WHITE)
-                        }
-                        /**
-                         * 整分获取戒期
-                         */
-                        if (now.second == 0) {
-                            // 更新戒期
-                            refreshSexDays()
-                            if (now.minite == 0) {
-                                // 整点报时：在光敏大于5，也就是非夜间时，整点报时。
-                                if (lightLevel > 5) _Utils.speaker(this@FullscreenActivity, now.hour.toString() + "点", 1.0f, 1.0f)
-                                loadSexdateFromCloud()
+                        if (isAlarmRunning) {
+                            runOnUiThread {
+                                layout_root.setBackgroundResource(R.color.alarm_color)
                             }
-                            if (weekday != 7 && weekday != 1) {
-                                if (now.hour == 8 && now.minite == 50) {
-                                    if (weekday == 6) {
-                                        _Utils.speaker(this@FullscreenActivity, "早上好，今天星期五！", 1.0f, 1.0f)
-                                    } else {
-                                        _Utils.ling(this@FullscreenActivity, R.raw.morning)
-                                    }
-                                } else if (now.hour == 14 && now.minite == 50) {
-                                    if (weekday == 6) {
-                                        _Utils.speaker(this@FullscreenActivity, "今天星期五，周一再见！", 1.0f, 1.0f)
-                                    } else {
-                                        _Utils.ling(this@FullscreenActivity, R.raw.bye)
-                                    }
+                            if (now.timeInMillis >= targetTimeInMillis) {
+//                            _Utils.ling(this@FullscreenActivity, R.raw.ding)
+                                _Utils.speaker(this@FullscreenActivity, getString(R.string.speaker_alarm), 1.0f, 0.8f)
+                                isAlarmRunning = false
+                                runOnUiThread {
+                                    layout_root.setBackgroundResource(R.color.b)
                                 }
                             }
                         }
@@ -336,13 +267,92 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                             textView_log.visibility = View.VISIBLE
                             textView_log.text = e.message
                         }
+                    }
+
+
+                    runOnUiThread {
+                        try {
+                            val lunar = Lunar(now)
+                            val day = now.day.toString() + ""
+//                        if (!isFundMonitor)
+                            tv_day.text = day
+                            tv_lunar_month.setText(lunar.chinaMonthString)
+                            tv_lunar_day.setText(lunar.chinaDayString)
+                            tv_time.text = now.toShortTimeString()
+                            tv_week.setText(now.weekDayStr)
+                            pc_second.setProgress(if (now.second == 0) 60 else now.second)
+                            if (isNock && isLoaded) {
+                                soundPool!!.play(1, 1f, 1f, 0, 0, 1f)
+                            }
+                            /**
+                             * 颜色
+                             */
+//                        if (lunar.day == 15 || lunar.day == 1) {
+//                            layout_root.setBackgroundResource(R.color.a)
+//                        } else {
+//                            layout_root.setBackgroundResource(R.color.b)
+//                        }
+                            if (now[Calendar.DAY_OF_WEEK] == 6) {
+                                tv_week.setTextColor(Color.RED)
+                            } else {
+                                tv_week.setTextColor(Color.WHITE)
+                            }
+                            /**
+                             * 每月初一、八、十四、十五、十八、二十三、二十四、二十八、二十九、三十
+                             */
+                            /**
+                             * 每月初一、八、十四、十五、十八、二十三、二十四、二十八、二十九、三十
+                             */
+                            if (lunar.day == 1 || lunar.day == 8 || lunar.day == 14 || lunar.day == 15 || lunar.day == 18 || lunar.day == 23 || lunar.day == 24 || lunar.day == 28 || lunar.day == 29 || lunar.day == 30) {
+                                tv_lunar_day.setTextColor(Color.RED)
+                            } else {
+                                tv_lunar_day.setTextColor(Color.WHITE)
+                            }
+                            /**
+                             * 整分获取戒期
+                             */
+                            if (now.second == 0) {
+                                // 更新戒期
+                                refreshSexDays()
+                                if (now.minite == 0) {
+                                    // 整点报时：在光敏大于5，也就是非夜间时，整点报时。
+                                    if (lightLevel > 5) _Utils.speaker(this@FullscreenActivity, now.hour.toString() + "点", 1.0f, 1.0f)
+                                    loadSexdateFromCloud()
+                                }
+                                if (weekday != 7 && weekday != 1) {
+                                    if (now.hour == 8 && now.minite == 50) {
+                                        if (weekday == 6) {
+                                            _Utils.speaker(this@FullscreenActivity, "早上好，今天星期五！", 1.0f, 1.0f)
+                                        } else {
+                                            _Utils.ling(this@FullscreenActivity, R.raw.morning)
+                                        }
+                                    } else if (now.hour == 14 && now.minite == 50) {
+                                        if (weekday == 6) {
+                                            _Utils.speaker(this@FullscreenActivity, "今天星期五，周一再见！", 1.0f, 1.0f)
+                                        } else {
+                                            _Utils.ling(this@FullscreenActivity, R.raw.bye)
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            runOnUiThread {
+                                textView_log.visibility = View.VISIBLE
+                                textView_log.text = e.message
+                            }
 
 //                        timer.cancel()
-                        e.printStackTrace()
+                            e.printStackTrace()
+                        }
                     }
                 }
+            }, 0, 1000)
+        }catch (e:Exception){
+            runOnUiThread {
+                textView_log.visibility = View.VISIBLE
+                textView_log.text = e.message
             }
-        }, 0, 1000)
+        }
     }
 
     private fun loadSexdateFromCloud() {
@@ -363,8 +373,9 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         })
     }
 
-    private fun e(log: Any?) {
+    private fun e(log: Any) {
         Log.e("wangsc", log.toString())
+        _Utils.runlog2file(log.toString(),null)
     }
 
     /**
@@ -389,6 +400,7 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
     }
 
     override fun onStop() {
+        e("fullscreen onStop")
         super.onStop()
 
         timer.cancel()
