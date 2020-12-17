@@ -7,12 +7,14 @@ import android.app.AlertDialog
 import android.app.admin.DevicePolicyManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Path
 import android.media.AudioManager
 import android.media.SoundPool
 import android.os.Build
 import android.os.Environment
 import android.os.PowerManager
 import android.os.PowerManager.WakeLock
+import android.provider.ContactsContract
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.View
