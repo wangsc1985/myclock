@@ -1,11 +1,17 @@
 package com.wang17.myclock
 
+import android.Manifest
+import android.content.DialogInterface
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnTouchListener
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -107,6 +113,8 @@ class MainActivity : AppCompatActivity() {
         mHideHandler.postDelayed(mHideRunnable, delayMillis.toLong())
     }
 
+
+
     companion object {
         /**
          * Whether or not the system UI should be auto-hidden after
@@ -126,4 +134,6 @@ class MainActivity : AppCompatActivity() {
          */
         private const val UI_ANIMATION_DELAY = 300
     }
+
+
 }

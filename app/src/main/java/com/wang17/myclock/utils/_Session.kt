@@ -42,8 +42,14 @@ object _Session {
             /**
              * 加载念佛音乐列表
              */
-            if (!ROOT_DIR.exists()) {
-                ROOT_DIR.mkdirs()
+
+            var dir = File(Environment.getExternalStorageDirectory().toString() + "/0")
+            if (!dir.exists()) {
+                dir.mkdir()
+            }
+            dir = File(Environment.getExternalStorageDirectory().toString() + "/0/myclock")
+            if (!dir.exists()) {
+                dir.mkdir()
             }
 
             Arrays.sort(TALLY_MUSIC_NAMES)

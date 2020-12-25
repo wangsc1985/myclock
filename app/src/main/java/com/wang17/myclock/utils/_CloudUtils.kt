@@ -15,7 +15,6 @@ import java.util.*
 
 
 object _CloudUtils {
-    private const val _TAG = "wangsc"
     private var newMsgCount = 0
     fun getNewMsg(context: Context?, callback: CloudCallback) {
         newMsgCount = 0

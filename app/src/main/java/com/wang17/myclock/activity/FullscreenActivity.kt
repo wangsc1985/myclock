@@ -1,10 +1,9 @@
 package com.wang17.myclock.activity
 
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.Manifest
+import android.content.*
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -18,7 +17,10 @@ import android.view.View
 import android.view.View.OnLongClickListener
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.wang17.myclock.R
 import com.wang17.myclock.SocketService
 import com.wang17.myclock.callback.ClocknockEvent
@@ -40,7 +42,6 @@ import kotlinx.android.synthetic.main.activity_fullscreen.*
 import kotlinx.android.synthetic.main.activity_fullscreen.image_volumn
 import kotlinx.android.synthetic.main.activity_fullscreen.layout_root
 import kotlinx.android.synthetic.main.activity_fullscreen.textView_log
-import kotlinx.android.synthetic.main.activity_fund_monitor.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
@@ -51,6 +52,7 @@ import java.util.concurrent.CountDownLatch
  * An example full-screen activity that shows and hides the system UI (i.e.status bar and navigation/system bar) with user interaction.
  */
 class FullscreenActivity : AppCompatActivity(), SensorEventListener {
+    private val MY_PERMISSIONS_REQUEST=100
     val mHideHandler: Handler
     var mainReciver: MainReciver
     var isNock: Boolean
@@ -124,6 +126,13 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         setContentView(R.layout.activity_fullscreen)
         EventBus.getDefault().register(this)
 
+        if(requestPermissions()){
+            initOnCreate()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    private fun initOnCreate() {
         /**
          * 设置音量
          */
@@ -162,20 +171,20 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
          *
          */
         layout_root.setOnClickListener {
-            SocketService.clock(this)
+//            SocketService.clock(this)
         }
         layout_root.setOnLongClickListener {
             toFundMonitor()
             true
         }
         tv_time.setOnClickListener {
-            SocketService.clock(this)
+//            SocketService.clock(this)
         }
         tv_markday.setOnClickListener {
-            SocketService.clock(this)
+//            SocketService.clock(this)
         }
         tv_day.setOnClickListener {
-            SocketService.clock(this)
+//            SocketService.clock(this)
         }
 
         loadSexdateFromCloud()
@@ -199,13 +208,12 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         })
         latch.await()
 
-        var ispeak = dataContext.getSetting(Setting.KEYS.is_stock_speak, false).boolean
+        var ispeak = dataContext.getSetting(KEYS.is_stock_speak, false).boolean
         if (ispeak) {
             image_volumn.visibility = View.VISIBLE
         } else {
             image_volumn.visibility = View.GONE
         }
-
     }
 
     override fun onDestroy() {
@@ -453,6 +461,62 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
             }
         }
     }
+
+    //region 动态权限申请
+    var permissions = arrayOf(
+            Manifest.permission.INTERNET,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+    )
+    var mNoPassedPermissionList: MutableList<String> = ArrayList()
+
+    /**
+     * 申请权限
+     */
+    fun requestPermissions(): Boolean {
+        mNoPassedPermissionList.clear()
+        for (i in permissions.indices) {
+            if (ContextCompat.checkSelfPermission(this, permissions.get(i)) != PackageManager.PERMISSION_GRANTED) {
+                com.wang17.myclock.e("权限名称 : ${permissions[i]} , 返回结果 : 未授权")
+                mNoPassedPermissionList.add(permissions.get(i))
+            }
+        }
+        if (mNoPassedPermissionList.isEmpty()) {
+            return true
+        } else {
+            //请求权限方法
+            val permissions = mNoPassedPermissionList.toTypedArray()
+            ActivityCompat.requestPermissions(this, permissions, MY_PERMISSIONS_REQUEST)
+            return false
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        if (requestCode == MY_PERMISSIONS_REQUEST) {
+            for (i in grantResults.indices) {
+                if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                    // 判断 是否仍然继续可以申请权限
+                    val showRequestPermission = ActivityCompat.shouldShowRequestPermissionRationale(this, permissions[i])
+                    com.wang17.myclock.e("权限名称：${permissions[i]}，申请结果：${grantResults[i]}，是否可再次申请：${showRequestPermission}")
+//                    if (!showRequestPermission) {
+//                        AlertDialog.Builder(this).setMessage("有权限未授权，且被禁止申请，请手动授权。").setNegativeButton("知道了", DialogInterface.OnClickListener { dialog, which ->
+//                            this.finish()
+//                        }).show()
+//                    }else{
+                    AlertDialog.Builder(this).setMessage("授权失败").setNegativeButton("知道了", DialogInterface.OnClickListener { dialog, which ->
+                        this.finish()
+                    }).show()
+//                    }
+                    return
+                }
+            }
+
+            initOnCreate()
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+    //endregion
+
 
     companion object {
         private const val UI_ANIMATION_DELAY = 300

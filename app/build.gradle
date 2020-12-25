@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.wang17.myclock"
-        minSdkVersion 16
+        minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -27,6 +27,17 @@ android {
         // Or, if you prefer, you can continue to check for errors in release builds,
         // but continue the build even when errors are found:
         abortOnError false
+    }
+    /**
+     * start 调试时使用自动签名，手动添加。
+     */
+    signingConfigs {
+        release {
+            storeFile file('wangsc.jks')
+            storePassword 'wangsc351489'
+            keyAlias 'key'
+            keyPassword 'wangsc351489'
+        }
     }
 }
 
