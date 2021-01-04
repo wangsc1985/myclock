@@ -190,7 +190,7 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
         loadSexdateFromCloud()
 
         val latch = CountDownLatch(1)
-        _CloudUtils.getPositions("0088", object : CloudCallback {
+        _CloudUtils.getPositions(this,"0088", object : CloudCallback {
             override fun excute(code: Int, result: Any) {
                 when (code) {
                     0 -> {
@@ -229,7 +229,6 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                 override fun run() {
                     val now = DateTime()
 
-                    e("ccccccccccccccccccc")
                     val startDate1 = DateTime()
                     startDate1.set(Calendar.HOUR_OF_DAY, 9)
                     startDate1.set(Calendar.MINUTE, 25)
@@ -248,12 +247,12 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                     endDate2.set(Calendar.SECOND, 0)
 
                     val weekday = now.get((Calendar.DAY_OF_WEEK))
-                    if (weekday != 7 && weekday != 1
-                            && (now.timeInMillis > startDate1.timeInMillis && now.timeInMillis < endDate1.timeInMillis
-                                    || now.timeInMillis > startDate2.timeInMillis && now.timeInMillis < endDate2.timeInMillis)) {
-                        toFundMonitor()
-                        return
-                    }
+//                    if (weekday != 7 && weekday != 1
+//                            && (now.timeInMillis > startDate1.timeInMillis && now.timeInMillis < endDate1.timeInMillis
+//                                    || now.timeInMillis > startDate2.timeInMillis && now.timeInMillis < endDate2.timeInMillis)) {
+//                        toFundMonitor()
+//                        return
+//                    }
 
 //                e("is alrm running : $isAlarmRunning")
                     try {
@@ -364,7 +363,7 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun loadSexdateFromCloud() {
-        _CloudUtils.getSetting("0088", KEYS.wx_sex_date.toString(), object : CloudCallback {
+        _CloudUtils.getSetting(this,"0088", KEYS.wx_sex_date.toString(), object : CloudCallback {
             override fun excute(code: Int, result: Any) {
                 e(code)
                 e(result)

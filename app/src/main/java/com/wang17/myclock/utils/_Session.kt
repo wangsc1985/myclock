@@ -11,29 +11,17 @@ import java.util.*
  * Created by 阿弥陀佛 on 2016/10/28.
  */
 object _Session {
-    const val ACTION_ALARM_NIANFO_OVER = "ACTION_ALARM_NIANFO_OVER"
-    const val ACTION_ALARM_TRADE = "ACTION_ALARM_TRADE"
-    const val ACTION_ALARM_STOCK_SCREEN = "ACTION_ALARM_STOCK_SCREEN"
-    const val NIAN_FO_ACTION = "NIAN_FO_VOICE"
-    const val NIAN_FO_TIMER = "NIAN_FO_TIMER"
-    const val POWER_MANAGER_ACTION = "POWER_MANAGER_VOICE"
-    val UUID_NULL = UUID.fromString("00000000-0000-0000-0000-000000000000")
-    const val ALERT_VOLUMN = 0.2f
-    val BIRTHDAY = DateTime(1985, 11, 27)
-    var BANK_CARD = "[" +
-            "{'index':'0','bank':'微贷','card':'0000'}," +
-            "{'index':'1','bank':'借呗','card':'0000'}," +
-            "{'index':'2','bank':'交行','card':'7086'}," +
-            "{'index':'3','bank':'浦发','card':'1826'}," +
-            "{'index':'4','bank':'工行','card':'0714'}," +
-            "{'index':'5','bank':'花呗','card':'0000'}]"
-    var GEARS = intArrayOf(180, 120, 80, 60, 40)
-    var GEAR_NAMES = arrayOf("等待", "步行", "单车", "汽车", "高速")
-    val ROOT_DIR = File(Environment.getExternalStorageDirectory().toString() + "/0/myclock")
+    val ROOT_DIR:File
+    get() {
+        val dir = File(Environment.getExternalStorageDirectory().toString() + "/0/myclock")
+        if(!dir.exists()){
+            dir.mkdirs()
+        }
+        return dir
+    }
+
     var TALLY_MUSIC_NAMES= _Utils.getFilesWithSuffix(ROOT_DIR.path, ".mp3")
     var commoditys: MutableList<Commodity> = ArrayList()
-    private const val _ATAG = "wangsc"
-
 
     val okHttpClient:OkHttpClient
     init {

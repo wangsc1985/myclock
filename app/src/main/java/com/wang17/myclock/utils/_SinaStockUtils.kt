@@ -51,7 +51,7 @@ object _SinaStockUtils {
                     val request = Request.Builder().url(url).build()
                     val response = client.newCall(request).execute()
                     if (response.isSuccessful) {
-                        val body = response.body()!!.string()
+                        val body = response.body!!.string()
                         val result = body.substring(body.indexOf("\"")).replace("\"", "").split(",".toRegex()).toTypedArray()
                         val info = StockInfo()
                         var profit = 0.0
@@ -121,7 +121,7 @@ object _SinaStockUtils {
                 val request = Request.Builder().url(url).build()
                 val response = client.newCall(request).execute()
                 if (response.isSuccessful) {
-                    val body = response.body()!!.string()
+                    val body = response.body!!.string()
                     val result = body.substring(body.indexOf("\"")).replace("\"", "").split(",".toRegex()).toTypedArray()
                     val open = result[2].toDouble()
                     info.name = result[0]

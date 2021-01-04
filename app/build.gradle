@@ -16,18 +16,6 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
-    lintOptions {
-        checkReleaseBuilds false
-        // Or, if you prefer, you can continue to check for errors in release builds,
-        // but continue the build even when errors are found:
-        abortOnError false
-    }
     /**
      * start 调试时使用自动签名，手动添加。
      */
@@ -38,6 +26,24 @@ android {
             keyAlias 'key'
             keyPassword 'wangsc351489'
         }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        /**
+         * 调试时使用自动签名，手动添加。
+         */
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+    lintOptions {
+        checkReleaseBuilds false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError false
     }
 }
 
@@ -51,10 +57,11 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-    compile 'com.jakewharton:butterknife:8.0.1'
+    implementation 'com.jakewharton:butterknife:8.0.1'
 
     implementation 'com.google.android:flexbox:0.2.2'
 //    网络通信库
+    implementation 'com.squareup.okhttp3:okhttp:4.5.0'
     implementation "com.squareup.okhttp3:okhttp:3.10.0"
     implementation "androidx.core:core-ktx:+"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
