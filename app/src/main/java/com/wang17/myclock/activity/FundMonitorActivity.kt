@@ -326,7 +326,6 @@ class FundMonitorActivity : AppCompatActivity() {
                                             _Utils.speaker(getApplicationContext(), speakMsg, pitch, speech)
                                         }
                                     } catch (e: Exception) {
-
                                         runOnUiThread {
                                             imageView_warning.visibility = View.VISIBLE
                                             textView_sz.visibility = View.INVISIBLE
@@ -346,24 +345,18 @@ class FundMonitorActivity : AppCompatActivity() {
                                 textView_log1.visibility = View.VISIBLE
                                 textView_log1.text = e.message
                             }
-//                                timer.cancel()
-                            e.printStackTrace()
                         }
                     } catch (e: Exception) {
-//                        timer.cancel()
-
                         runOnUiThread {
                             imageView_warning.visibility = View.VISIBLE
                             textView_sz.visibility = View.INVISIBLE
                             textView_log1.visibility = View.VISIBLE
                             textView_log1.text = e.message
                         }
-                        e.printStackTrace()
                     }
                 }
             }, 0, 1000)
         } catch (e: Exception) {
-//            timer.cancel()
             runOnUiThread {
                 imageView_warning.visibility = View.VISIBLE
                 textView_sz.visibility = View.INVISIBLE
@@ -371,7 +364,6 @@ class FundMonitorActivity : AppCompatActivity() {
                 textView_log1.visibility = View.VISIBLE
                 textView_log1.text = e.message
             }
-            e.printStackTrace()
         }
     }
 
@@ -415,9 +407,11 @@ class FundMonitorActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun reflushBatteryNumber() {
-        val batteryManager = getSystemService(BATTERY_SERVICE) as BatteryManager
-        val battery = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        textView_battery.text = "$battery%"
+        runOnUiThread {
+            val batteryManager = getSystemService(BATTERY_SERVICE) as BatteryManager
+            val battery = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+            textView_battery.text = "$battery%"
+        }
     }
 
     private fun parseItem(code: String): String {
