@@ -22,12 +22,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.wang17.myclock.R
-import com.wang17.myclock.SocketService
 import com.wang17.myclock.callback.ClocknockEvent
 import com.wang17.myclock.callback.CloudCallback
 import com.wang17.myclock.callback.ExchangeEvent
 import com.wang17.myclock.database.Position
-import com.wang17.myclock.database.Setting
 import com.wang17.myclock.database.Setting.KEYS
 import com.wang17.myclock.database.utils.DataContext
 import com.wang17.myclock.isAlarmRunning
@@ -38,20 +36,16 @@ import com.wang17.myclock.utils.AudioUtils
 import com.wang17.myclock.utils.LightSensorUtil
 import com.wang17.myclock.utils._CloudUtils
 import com.wang17.myclock.utils._Utils
-import kotlinx.android.synthetic.main.activity_fullscreen.*
-import kotlinx.android.synthetic.main.activity_fullscreen.image_volumn
-import kotlinx.android.synthetic.main.activity_fullscreen.layout_root
-import kotlinx.android.synthetic.main.activity_fullscreen.textView_log
+import kotlinx.android.synthetic.main.activity_clock.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import java.util.*
-import java.util.concurrent.CountDownLatch
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.status bar and navigation/system bar) with user interaction.
  */
-class FullscreenActivity : AppCompatActivity(), SensorEventListener {
+class ClockActivity : AppCompatActivity(), SensorEventListener {
     private val MY_PERMISSIONS_REQUEST=100
     val mHideHandler: Handler
     var mainReciver: MainReciver
@@ -123,7 +117,7 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         e("fullscreen on create")
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_fullscreen)
+        setContentView(R.layout.activity_clock)
         EventBus.getDefault().register(this)
 
         if(requestPermissions()){
@@ -189,25 +183,6 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
 
         loadSexdateFromCloud()
 
-        val latch = CountDownLatch(1)
-        _CloudUtils.getPositions(this,"0088", object : CloudCallback {
-            override fun excute(code: Int, result: Any) {
-                when (code) {
-                    0 -> {
-                        positions = result as MutableList<Position>
-                    }
-                    -1 -> {
-                        e(result.toString())
-                    }
-                    -2 -> {
-                        e(result.toString())
-                    }
-                }
-                latch.countDown()
-            }
-        })
-        latch.await()
-
         var ispeak = dataContext.getSetting(KEYS.is_stock_speak, false).boolean
         if (ispeak) {
             image_volumn.visibility = View.VISIBLE
@@ -262,7 +237,7 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                             }
                             if (now.timeInMillis >= targetTimeInMillis) {
 //                            _Utils.ling(this@FullscreenActivity, R.raw.ding)
-                                _Utils.speaker(this@FullscreenActivity, getString(R.string.speaker_alarm), 1.0f, 0.8f)
+                                _Utils.speaker(this@ClockActivity, getString(R.string.speaker_alarm), 1.0f, 0.8f)
                                 isAlarmRunning = false
                                 runOnUiThread {
                                     layout_root.setBackgroundResource(R.color.b)
@@ -323,21 +298,21 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                                 refreshSexDays()
                                 if (now.minite == 0) {
                                     // 整点报时：在光敏大于5，也就是非夜间时，整点报时。
-                                    if (lightLevel > 5) _Utils.speaker(this@FullscreenActivity, now.hour.toString() + "点", 1.0f, 1.0f)
+                                    if (lightLevel > 5) _Utils.speaker(this@ClockActivity, now.hour.toString() + "点", 1.0f, 1.0f)
                                     loadSexdateFromCloud()
                                 }
                                 if (weekday != 7 && weekday != 1) {
                                     if (now.hour == 8 && now.minite == 50) {
                                         if (weekday == 6) {
-                                            _Utils.speaker(this@FullscreenActivity, "早上好，今天星期五！", 1.0f, 1.0f)
+                                            _Utils.speaker(this@ClockActivity, "早上好，今天星期五！", 1.0f, 1.0f)
                                         } else {
-                                            _Utils.ling(this@FullscreenActivity, R.raw.morning)
+                                            _Utils.ling(this@ClockActivity, R.raw.morning)
                                         }
                                     } else if (now.hour == 14 && now.minite == 50) {
                                         if (weekday == 6) {
-                                            _Utils.speaker(this@FullscreenActivity, "今天星期五，周一再见！", 1.0f, 1.0f)
+                                            _Utils.speaker(this@ClockActivity, "今天星期五，周一再见！", 1.0f, 1.0f)
                                         } else {
-                                            _Utils.ling(this@FullscreenActivity, R.raw.bye)
+                                            _Utils.ling(this@ClockActivity, R.raw.bye)
                                         }
                                     }
                                 }
@@ -373,9 +348,9 @@ class FullscreenActivity : AppCompatActivity(), SensorEventListener {
                         refreshSexDays()
                     }
                 }
-                Looper.prepare()
-                Toast.makeText(this@FullscreenActivity, "更新完毕", Toast.LENGTH_LONG).show()
-                Looper.loop()
+                runOnUiThread {
+                    Toast.makeText(this@ClockActivity, "更新完毕", Toast.LENGTH_LONG).show()
+                }
             }
         })
     }

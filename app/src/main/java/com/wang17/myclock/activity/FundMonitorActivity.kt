@@ -31,14 +31,15 @@ import org.greenrobot.eventbus.ThreadMode
 import java.text.DecimalFormat
 import java.util.*
 import java.util.concurrent.CountDownLatch
+import kotlin.collections.ArrayList
 import kotlinx.android.synthetic.main.activity_fund_monitor.textView_log as textView_log1
 
 class FundMonitorActivity : AppCompatActivity() {
     val mHideHandler: Handler
 
-    private lateinit var positions: List<Position>
+    private var positions: MutableList<Position> = ArrayList()
     private lateinit var mDataContext: DataContext
-    private lateinit var mainReciver: MainReciver
+    private var mainReciver = MainReciver()
 
     private var preClickTime: Long = 0
     private var preBatteryTime: Long = 0
@@ -92,24 +93,18 @@ class FundMonitorActivity : AppCompatActivity() {
         mDataContext = DataContext(this)
         preClickTime = System.currentTimeMillis()
 
-        val latch = CountDownLatch(1)
-        _CloudUtils.getPositions(this,"0088", object : CloudCallback {
+        _CloudUtils.getPositions(this, "0088", object : CloudCallback {
             override fun excute(code: Int, result: Any) {
                 when (code) {
                     0 -> {
                         positions = result as MutableList<Position>
                     }
-                    -1 -> {
-                        e(result.toString())
-                    }
-                    -2 -> {
+                    else -> {
                         e(result.toString())
                     }
                 }
-                latch.countDown()
             }
         })
-        latch.await()
 
 
         /**
@@ -121,7 +116,6 @@ class FundMonitorActivity : AppCompatActivity() {
         /**
          * 监听
          */
-        mainReciver = MainReciver()
         val filter = IntentFilter()
         // 监控开关屏
         filter.addAction(Intent.ACTION_SCREEN_OFF)
@@ -145,7 +139,7 @@ class FundMonitorActivity : AppCompatActivity() {
 
         layout_root.setOnLongClickListener {
             this.finish()
-            startActivity(Intent(this, FullscreenActivity::class.java))
+            startActivity(Intent(this, ClockActivity::class.java))
             true
         }
 
@@ -198,12 +192,11 @@ class FundMonitorActivity : AppCompatActivity() {
     private lateinit var timer: Timer
     private var preAverageProfit = 0.0
     private fun e(log: Any) {
-        Log.e("wangsc",log.toString())
-        _Utils.runlog2file(log.toString(),null)
+        Log.e("wangsc", log.toString())
+        _Utils.runlog2file(log.toString(), null)
     }
 
 
-    var tag = true
     private fun startTimer() {
         try {
             timer = Timer()
@@ -258,114 +251,103 @@ class FundMonitorActivity : AppCompatActivity() {
                                 textView_weekday.setTextColor(Color.WHITE)
                             }
                             textView_time.text = now.toShortTimeString()
-//                            if (now.second == 0) {
-//                                tag = !tag
-//                                progressBar.rotation += 180f
-//                                progressBar2.rotation += 180f
-//                            }
-//                            if (tag) {
-//                                progressBar.progress = 59 - now.second
-//                                progressBar2.progress = now.second
-//                            } else {
-//                                progressBar.progress = now.second
-//                                progressBar2.progress = 59 - now.second
-//                            }
                         }
 
-                        runOnUiThread {
-                            try {
-                                reflushBatteryNumber()
+                        try {
+                            reflushBatteryNumber()
 
-                                var info = StockInfo()
-                                info.code = "000001"
-                                info.exchange = "sh"
+                            var info = StockInfo()
+                            info.code = "000001"
+                            info.exchange = "sh"
 
-                                _SinaStockUtils.getStockInfo(info, object : _SinaStockUtils.OnLoadStockInfoListener {
-                                    override fun onLoadFinished(info: StockInfo, time: String) {
-                                        runOnUiThread {
-                                            textView_sz.text = DecimalFormat("0.00").format(info.increase * 100)
-                                            if (info.increase > 0) {
-                                                textView_sz.setTextColor(Color.RED)
-                                            } else if (info.increase == 0.0) {
-                                                textView_sz.setTextColor(Color.WHITE)
-                                            } else {
-                                                textView_sz.setTextColor(Color.CYAN)
-                                            }
+                            _SinaStockUtils.getStockInfo(info, object : _SinaStockUtils.OnLoadStockInfoListener {
+                                override fun onLoadFinished(info: StockInfo, time: String) {
+                                    runOnUiThread {
+                                        textView_sz.text = DecimalFormat("0.00").format(info.increase * 100)
+                                        if (info.increase > 0) {
+                                            textView_sz.setTextColor(Color.RED)
+                                        } else if (info.increase == 0.0) {
+                                            textView_sz.setTextColor(Color.WHITE)
+                                        } else {
+                                            textView_sz.setTextColor(Color.CYAN)
                                         }
                                     }
-                                })
+                                }
+                            })
 
-                                _SinaStockUtils.getStockInfoList(positions, object : _SinaStockUtils.OnLoadStockInfoListListener {
-                                    override fun onLoadFinished(stockInfoList: MutableList<StockInfo>, totalProfit: Double, averageProfit: Double, time: String) {
-                                        try {
-                                            val size = stockInfoList.size
+                            if (positions.size == 0)
+                                return
+
+                            _SinaStockUtils.getStockInfoList(positions, object : _SinaStockUtils.OnLoadStockInfoListListener {
+                                override fun onLoadFinished(stockInfoList: MutableList<StockInfo>, totalProfit: Double, averageProfit: Double, time: String) {
+                                    try {
+                                        val size = stockInfoList.size
 //                                            e("$size , $totalProfit , $averageProfit")
-                                            if (stockInfoList.size == 0) {
-                                                return
+                                        if (stockInfoList.size == 0) {
+                                            return
+                                        }
+
+                                        runOnUiThread {
+                                            textView_totalProfit.text = DecimalFormat("0.00").format(averageProfit * 100)
+                                            if (averageProfit > 0) {
+                                                textView_totalProfit.setTextColor(Color.RED)
+                                            } else if (averageProfit == 0.0) {
+                                                textView_totalProfit.setTextColor(Color.WHITE)
+                                            } else {
+                                                textView_totalProfit.setTextColor(Color.CYAN)
                                             }
 
-                                            runOnUiThread {
-                                                textView_totalProfit.text = DecimalFormat("0.00").format(averageProfit * 100)
-                                                if (averageProfit > 0) {
-                                                    textView_totalProfit.setTextColor(Color.RED)
-                                                } else if (averageProfit == 0.0) {
-                                                    textView_totalProfit.setTextColor(Color.WHITE)
-                                                } else {
-                                                    textView_totalProfit.setTextColor(Color.CYAN)
-                                                }
-
-                                                val aa = time.split(":")
-                                                val now = DateTime()
-                                                val tradeTime = DateTime(now.year, now.month, now.day, aa[0].toInt(), aa[1].toInt(), aa[2].toInt())
-                                                if (now.timeInMillis - tradeTime.timeInMillis > 10000) {
-                                                    imageView_warning.visibility = View.VISIBLE
-                                                    textView_sz.visibility = View.INVISIBLE
-                                                } else {
-                                                    imageView_warning.visibility = View.INVISIBLE
-                                                    textView_sz.visibility = View.VISIBLE
-                                                }
-                                            }
-                                            var speakMsg = ""
-                                            //region 股票平均盈利
-                                            val msgS = DecimalFormat("0.00").format(averageProfit * 100)
-//                                            Log.e("wangsc", "averageTotalProfitS: $msgS")
-                                            if (Math.abs(averageProfit - preAverageProfit) * 100 > (1.0 / size)) {
-                                                preAverageProfit = averageProfit
-                                                speakMsg += msgS
-                                            }
-                                            if (!speakMsg.isEmpty() && image_volumn.visibility == View.VISIBLE) {
-                                                var pitch = 1.0f
-                                                var speech = 1.2f
-                                                if (averageProfit < 0) {
-                                                    pitch = 0.1f
-                                                    speech = 0.8f
-                                                }
-                                                _Utils.speaker(getApplicationContext(), speakMsg, pitch, speech)
-                                            }
-                                        } catch (e: Exception) {
-
-                                            runOnUiThread {
+                                            val aa = time.split(":")
+                                            val now = DateTime()
+                                            val tradeTime = DateTime(now.year, now.month, now.day, aa[0].toInt(), aa[1].toInt(), aa[2].toInt())
+                                            if (now.timeInMillis - tradeTime.timeInMillis > 10000) {
                                                 imageView_warning.visibility = View.VISIBLE
                                                 textView_sz.visibility = View.INVISIBLE
-                                                textView_log1.visibility = View.VISIBLE
-                                                textView_log1.text = e.message
+                                            } else {
+                                                imageView_warning.visibility = View.INVISIBLE
+                                                textView_sz.visibility = View.VISIBLE
                                             }
-//                                            timer.cancel()
-                                            Log.e("wangsc", e.message)
-                                            e.printStackTrace()
                                         }
+                                        var speakMsg = ""
+                                        //region 股票平均盈利
+                                        val msgS = DecimalFormat("0.00").format(averageProfit * 100)
+//                                            Log.e("wangsc", "averageTotalProfitS: $msgS")
+                                        if (Math.abs(averageProfit - preAverageProfit) * 100 > (1.0 / size)) {
+                                            preAverageProfit = averageProfit
+                                            speakMsg += msgS
+                                        }
+                                        if (!speakMsg.isEmpty() && image_volumn.visibility == View.VISIBLE) {
+                                            var pitch = 1.0f
+                                            var speech = 1.2f
+                                            if (averageProfit < 0) {
+                                                pitch = 0.1f
+                                                speech = 0.8f
+                                            }
+                                            _Utils.speaker(getApplicationContext(), speakMsg, pitch, speech)
+                                        }
+                                    } catch (e: Exception) {
+
+                                        runOnUiThread {
+                                            imageView_warning.visibility = View.VISIBLE
+                                            textView_sz.visibility = View.INVISIBLE
+                                            textView_log1.visibility = View.VISIBLE
+                                            textView_log1.text = e.message
+                                        }
+//                                            timer.cancel()
+                                        Log.e("wangsc", e.message)
+                                        e.printStackTrace()
                                     }
-                                })
-                            } catch (e: Exception) {
-                                runOnUiThread {
-                                    imageView_warning.visibility = View.VISIBLE
-                                    textView_sz.visibility = View.INVISIBLE
-                                    textView_log1.visibility = View.VISIBLE
-                                    textView_log1.text = e.message
                                 }
-//                                timer.cancel()
-                                e.printStackTrace()
+                            })
+                        } catch (e: Exception) {
+                            runOnUiThread {
+                                imageView_warning.visibility = View.VISIBLE
+                                textView_sz.visibility = View.INVISIBLE
+                                textView_log1.visibility = View.VISIBLE
+                                textView_log1.text = e.message
                             }
+//                                timer.cancel()
+                            e.printStackTrace()
                         }
                     } catch (e: Exception) {
 //                        timer.cancel()
@@ -401,7 +383,7 @@ class FundMonitorActivity : AppCompatActivity() {
     private fun toFullScreenActivity() {
         try {
             this.finish()
-            startActivity(Intent(this, FullscreenActivity::class.java))
+            startActivity(Intent(this, ClockActivity::class.java))
             timer.cancel()
         } catch (e: Exception) {
             runOnUiThread {

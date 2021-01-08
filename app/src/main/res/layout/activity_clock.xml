@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/b"
     android:padding="20dp"
-    tools:context=".activity.FullscreenActivity">
+    tools:context=".activity.ClockActivity">
 
     <TextView
         android:id="@+id/tv_day"
@@ -54,6 +54,7 @@
         android:id="@+id/pc_second"
         android:layout_width="180dp"
         android:layout_height="180dp"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@+id/tv_day"
         app:layout_constraintEnd_toEndOf="@+id/tv_day"
         app:layout_constraintStart_toStartOf="@+id/tv_day"
