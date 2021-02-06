@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.wang17.myclock"
-        minSdkVersion 21
+        minSdkVersion 19
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -61,8 +61,7 @@ dependencies {
 
     implementation 'com.google.android:flexbox:0.2.2'
 //    网络通信库
-    implementation 'com.squareup.okhttp3:okhttp:4.5.0'
-    implementation "com.squareup.okhttp3:okhttp:3.10.0"
+    implementation 'com.squareup.okhttp3:okhttp:3.12.1'
     implementation "androidx.core:core-ktx:+"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 

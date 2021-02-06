@@ -3,9 +3,13 @@ package com.wang17.myclock.utils
 import android.os.Environment
 import com.wang17.myclock.model.Commodity
 import com.wang17.myclock.model.DateTime
+import com.wang17.myclock.model.SSLSocketFactoryCompat
 import okhttp3.OkHttpClient
 import java.io.File
+import java.security.KeyManagementException
+import java.security.NoSuchAlgorithmException
 import java.util.*
+import javax.net.ssl.SSLSocketFactory
 
 /**
  * Created by 阿弥陀佛 on 2016/10/28.
@@ -23,21 +27,30 @@ object _Session {
     var TALLY_MUSIC_NAMES= _Utils.getFilesWithSuffix(ROOT_DIR.path, ".mp3")
     var commoditys: MutableList<Commodity> = ArrayList()
 
+    fun createOkHttpClient(): OkHttpClient {
+        val builder = OkHttpClient.Builder()
+        try {
+            val factory: SSLSocketFactory = SSLSocketFactoryCompat()
+            builder.sslSocketFactory(factory)
+        } catch (e: KeyManagementException) {
+            e.printStackTrace()
+        } catch (e: NoSuchAlgorithmException) {
+            e.printStackTrace()
+        }
+        return builder.build()
+    }
+
     val okHttpClient:OkHttpClient
     init {
         try {
-            okHttpClient= OkHttpClient()
+            okHttpClient= createOkHttpClient()
             /**
              * 加载念佛音乐列表
              */
 
-            var dir = File(Environment.getExternalStorageDirectory().toString() + "/0")
+            var dir = File(Environment.getExternalStorageDirectory().toString() + "/0/myclock")
             if (!dir.exists()) {
-                dir.mkdir()
-            }
-            dir = File(Environment.getExternalStorageDirectory().toString() + "/0/myclock")
-            if (!dir.exists()) {
-                dir.mkdir()
+                dir.mkdirs()
             }
 
             Arrays.sort(TALLY_MUSIC_NAMES)

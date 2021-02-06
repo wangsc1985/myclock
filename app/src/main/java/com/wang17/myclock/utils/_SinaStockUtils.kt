@@ -7,6 +7,7 @@ import com.wang17.myclock.model.StockInfo
 import com.wang17.myclock.utils._Utils.runlog2file
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.math.BigDecimal
 import java.util.*
 
 object _SinaStockUtils {
@@ -36,80 +37,87 @@ object _SinaStockUtils {
         Log.e("wangsc", log.toString())
     }
 
-    fun getStockInfoList(stocks: List<Position>, onLoadStockInfoListListener: OnLoadStockInfoListListener) {
-        Thread {
+    @JvmStatic
+    @Throws(Exception::class)
+    fun getStockInfoList(positions: List<Position>, onLoadStockInfoListListener: OnLoadStockInfoListListener?) {
+        Thread(Runnable {
             var isStock = true
-            var totalProfit = 0.0
-            var totalAmount = 0.0
+            var totalProfit = 0.toBigDecimal()
+            var totalCostFund = 0.toBigDecimal()
             var time = ""
             val stockInfoList: MutableList<StockInfo> = ArrayList()
             try {
-                for (stock in stocks) {
-                    val url = "https://hq.sinajs.cn/list=" + stock.exchange + stock.code
+                for (position in positions) {
+//                        final Stock stock = stock;
+                    val url = "https://hq.sinajs.cn/list=" + position.exchange + position.code
+//                    e(url)
                     val client = _Session.okHttpClient
-
                     val request = Request.Builder().url(url).build()
                     val response = client.newCall(request).execute()
                     if (response.isSuccessful) {
-                        val body = response.body!!.string()
+                        val body = response.body()!!.string()
                         val result = body.substring(body.indexOf("\"")).replace("\"", "").split(",".toRegex()).toTypedArray()
                         val info = StockInfo()
-                        var profit = 0.0
-                        if (stock.type == 0) {
+                        var profit = 0.toBigDecimal()
+                        if (position.type == 0) {
                             /**
                              * 股票列表
                              */
                             isStock = true
                             val open = result[2].toDouble()
                             info.name = result[0]
-                            info.price = result[3].toDouble()
-                            info.increase = (info.price - open) / open
+                            info.price = result[3].toBigDecimal()
+
+                            val fee = TradeUtils.commission(info.price, position.amount) + TradeUtils.tax(-1, info.price, position.amount) + TradeUtils.transferFee(info.price, position.amount)
+                            info.increase =(info.price - position.cost) / position.cost
                             info.time = result[31]
-                            profit = (info.price - stock.cost) / stock.cost
-                            totalProfit += profit * stock.amount * stock.cost * 100
-                            totalAmount += stock.amount * stock.cost * 100
+                            profit = (info.price - position.cost)*(position.amount*100).toBigDecimal() -fee
+                            totalProfit += profit
+                            totalCostFund += position.cost * (position.amount  * 100).toBigDecimal()
                         } else {
                             /**
                              * 期货列表
                              */
                             isStock = false
-                            val open = result[2].toDouble()
+                            val open = result[2].toBigDecimal()
                             info.name = result[0]
-                            info.price = result[8].toDouble()
-                            val yesterdayClose = result[5].toDouble()
+                            info.price = result[8].toBigDecimal()
+                            val yesterdayClose = result[5].toBigDecimal()
                             info.increase = info.price - yesterdayClose
                             info.time = result[1]
-                            val commodity = findCommodity(stock.code)
-                            profit = stock.type * (info.price - stock.cost) * stock.amount * commodity!!.unit
+                            val commodity = findCommodity(position.code)
+                            profit =(info.price - position.cost) * (position.type *  position.amount * commodity!!.unit).toBigDecimal()
                             totalProfit += profit
                         }
                         time = info.time
-                        info.type = stock.type
-                        info.code = stock.code
-                        info.cost = stock.cost
-                        info.exchange = stock.exchange
-                        info.amount = stock.amount
+                        info.type = position.type
+                        info.code = position.code
+                        info.cost = position.cost
+                        info.exchange = position.exchange
+                        info.amount = position.amount
                         stockInfoList.add(info)
                     } else {
-                        runlog2file("获取数据失败...")
+                        _Utils.log2file("err","获取数据失败...","")
+                        return@Runnable
                     }
                 }
-                var averageProfit = 0.0
-                averageProfit = if (isStock) {
-                    totalProfit / totalAmount
+                var totalAverageIncrease = if (isStock) {
+                    totalProfit / totalCostFund
                 } else {
                     totalProfit
                 }
-
-                if (stocks.size != 0)
-                    onLoadStockInfoListListener.onLoadFinished(stockInfoList, totalProfit, averageProfit, time)
-                else
-                    onLoadStockInfoListListener.onLoadFinished(stockInfoList, 0.0, 0.0, time)
+//                e("ffffffffffffffffffffffffffffffffffffff $onLoadStockInfoListListener")
+                if (onLoadStockInfoListListener != null) {
+                    if (positions.size != 0)
+                        onLoadStockInfoListListener.onLoadFinished(stockInfoList, totalProfit, totalAverageIncrease, time)
+                    else
+                        onLoadStockInfoListListener.onLoadFinished(stockInfoList, 0.toBigDecimal(), 0.toBigDecimal(), time)
+                }
             } catch (e: Exception) {
-//                _Utils.error2file("SinaStockUtils.getStockInfoList  error: ", e.message)
-                Log.e("wangsc", e.message)
+                e(e.message!!)
+                _Utils.log2file("err","获取数据失败...",e.message!!)
             }
-        }.start()
+        }).start()
     }
 
     fun getStockInfo(info: StockInfo, onLoadStockInfoListener: OnLoadStockInfoListener) {
@@ -121,11 +129,11 @@ object _SinaStockUtils {
                 val request = Request.Builder().url(url).build()
                 val response = client.newCall(request).execute()
                 if (response.isSuccessful) {
-                    val body = response.body!!.string()
+                    val body = response.body()!!.string()
                     val result = body.substring(body.indexOf("\"")).replace("\"", "").split(",".toRegex()).toTypedArray()
-                    val open = result[2].toDouble()
+                    val open = result[2].toBigDecimal()
                     info.name = result[0]
-                    info.price = result[3].toDouble()
+                    info.price = result[3].toBigDecimal()
                     info.increase = (info.price - open) / open
                     info.time = result[31]
                     time = info.time
@@ -144,6 +152,7 @@ object _SinaStockUtils {
     }
 
     interface OnLoadStockInfoListListener {
-        fun onLoadFinished(infoList: MutableList<StockInfo>, totalProfit: Double, averageProfit: Double, time: String)
+        fun onLoadFinished(infoList: MutableList<StockInfo>, totalProfit: BigDecimal, averageProfit: BigDecimal, time: String)
     }
+
 }

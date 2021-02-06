@@ -4,6 +4,7 @@ package com.wang17.myclock.activity
 import android.Manifest
 import android.content.*
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.graphics.Color
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -30,16 +31,25 @@ import com.wang17.myclock.database.Setting.KEYS
 import com.wang17.myclock.database.utils.DataContext
 import com.wang17.myclock.isAlarmRunning
 import com.wang17.myclock.model.DateTime
+import com.wang17.myclock.model.GanZhi
 import com.wang17.myclock.model.Lunar
+import com.wang17.myclock.model.SolarTerm
 import com.wang17.myclock.targetTimeInMillis
 import com.wang17.myclock.utils.AudioUtils
 import com.wang17.myclock.utils.LightSensorUtil
 import com.wang17.myclock.utils._CloudUtils
 import com.wang17.myclock.utils._Utils
 import kotlinx.android.synthetic.main.activity_clock.*
+import kotlinx.android.synthetic.main.activity_clock.image_volumn
+import kotlinx.android.synthetic.main.activity_clock.layout_root
+import kotlinx.android.synthetic.main.activity_clock.textView_log
+import kotlinx.android.synthetic.main.activity_clock.tv_ganzhi
+import kotlinx.android.synthetic.main.activity_fund_monitor.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import java.io.DataInputStream
+import java.io.EOFException
 import java.util.*
 
 /**
@@ -55,6 +65,7 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
     var lightLevel: Float
     var sexDate: DateTime? = null
     private var preAverageProfit = 0.0
+    private lateinit var solarTermMap: TreeMap<DateTime, SolarTerm>
 //    var isFundMonitor = false
 
     private lateinit var positions: List<Position>
@@ -113,6 +124,46 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
         isNock = !isNock
     }
 
+    /**
+     * 读取JAVA结构的二进制节气数据文件。
+     *
+     * @param resId 待读取的JAVA二进制文件。
+     * @return
+     */
+    private fun loadJavaSolarTerms(resId:Int) :TreeMap<DateTime, SolarTerm>{
+        var result = TreeMap<DateTime, SolarTerm>();
+        try {
+            var dis = DataInputStream(getResources().openRawResource(resId));
+
+            var date = dis.readLong();
+            var solar = dis.readInt();
+            try {
+                while (true) {
+                    var cal = DateTime();
+                    cal.setTimeInMillis(date);
+                    var solarTerm = SolarTerm.Int2SolarTerm(solar);
+                    result.put(cal, solarTerm);
+                    date = dis.readLong();
+                    solar = dis.readInt();
+                }
+            } catch ( ex: EOFException) {
+                dis.close();
+            }
+        } catch ( e: Resources.NotFoundException) {
+            Log.i("wangsc", e.message);
+        } catch (e:Exception) {
+            Log.i("wangsc", e.message);
+        }
+        // 按照KEY排序TreeMap
+//        TreeMap<DateTime, SolarTerm> result = new TreeMap<DateTime, SolarTerm>(new Comparator<DateTime>() {
+//            @Override
+//            public int compare(DateTime lhs, DateTime rhs) {
+//                return lhs.compareTo(rhs);
+//            }
+//        });
+        return result;
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
         e("fullscreen on create")
@@ -120,6 +171,8 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
         setContentView(R.layout.activity_clock)
         EventBus.getDefault().register(this)
 
+        //
+        solarTermMap = loadJavaSolarTerms(R.raw.solar_java_50)
         if(requestPermissions()){
             initOnCreate()
         }
@@ -130,10 +183,10 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
         /**
          * 设置音量
          */
-        val audioUtils = AudioUtils.getInstance(this)
-        val volume = (audioUtils.mediaMaxVolume * 0.8).toInt()
-        if (audioUtils.mediaVolume < volume)
-            audioUtils.mediaVolume = volume
+//        val audioUtils = AudioUtils.getInstance(this)
+//        val volume = (audioUtils.mediaMaxVolume * 0.8).toInt()
+//        if (audioUtils.mediaVolume < volume)
+//            audioUtils.mediaVolume = volume
 
         dataContext = DataContext(this)
         tv_time.setOnLongClickListener(OnLongClickListener {
@@ -147,9 +200,11 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
          * 初始化
          */
         refreshSexDays()
-        val batteryManager = getSystemService(BATTERY_SERVICE) as BatteryManager
-        val battery = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        tv_battery.setText("$battery%")
+//        val batteryManager = getSystemService(BATTERY_SERVICE) as BatteryManager?
+//        e("battery manager : ${batteryManager}")
+//        val battery = batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+//        e("battery : ${battery}")
+//        tv_battery.setText("$battery%")
         /**
          * 监听
          */
@@ -189,6 +244,8 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
         } else {
             image_volumn.visibility = View.GONE
         }
+
+        abc()
     }
 
     override fun onDestroy() {
@@ -197,6 +254,103 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
         EventBus.getDefault().unregister(this)
     }
 
+    fun abc() {
+        var gz = GanZhi(DateTime(), solarTermMap)
+        runOnUiThread {
+            var res = StringBuffer()
+            val str = "${gz.tianGanYear}${gz.diZhiYear} ${gz.tianGanMonth}${gz.diZhiMonth} ${gz.tianGanDay}${gz.diZhiDay} ${gz.tianGanHour}${gz.diZhiHour}"
+            tv_ganzhi.text = str
+            if (str.contains("子") && str.contains("午")) {
+                res.append("子午相冲\t")
+            }
+            if (str.contains("丑") && str.contains("未")) {
+                res.append("丑未相冲\t")
+            }
+            if (str.contains("寅") && str.contains("申")) {
+                res.append("寅申相冲\t")
+            }
+            if (str.contains("卯") && str.contains("酉")) {
+                res.append("卯酉相冲\t")
+            }
+            if (str.contains("辰") && str.contains("戌")) {
+                res.append("辰戌相冲\t")
+            }
+            if (str.contains("巳") && str.contains("亥")) {
+                res.append("巳亥相冲\t")
+            }
+
+
+            if (str.contains("子") && str.contains("未")) {
+                res.append("子未相害\t")
+            }
+            if (str.contains("丑") && str.contains("午")) {
+                res.append("丑午相害\t")
+            }
+            if (str.contains("寅") && str.contains("巳")) {
+                res.append("寅巳相害\t")
+            }
+            if (str.contains("卯") && str.contains("辰")) {
+                res.append("卯辰相害\t")
+            }
+            if (str.contains("申") && str.contains("亥")) {
+                res.append("申亥相害\t")
+            }
+            if (str.contains("酉") && str.contains("戌")) {
+                res.append("酉戌相害\t")
+            }
+
+
+//            子丑合，寅亥合，卯戌合，巳申合，午未合，辰酉合
+            if (str.contains("子") && str.contains("丑")) {
+                res.append("子丑合\t")
+            }
+            if (str.contains("寅") && str.contains("亥")) {
+                res.append("寅亥合\t")
+            }
+            if (str.contains("卯") && str.contains("戌")) {
+                res.append("卯戌合\t")
+            }
+            if (str.contains("巳") && str.contains("申")) {
+                res.append("巳申合\t")
+            }
+            if (str.contains("午") && str.contains("未")) {
+                res.append("午未合\t")
+            }
+            if (str.contains("辰") && str.contains("酉")) {
+                res.append("辰酉合\t")
+            }
+
+//            申子辰合水，申生长刚开始,到子水最帝旺,辰土墓.
+//            午寅戌合火，寅生长刚开始,到午火最帝旺,戌土墓.
+//            巳酉丑合金，巳生长刚开始,到酉金最帝旺,丑土墓.
+//            亥卯未合木，亥生长刚开始,到卯木最帝旺,未土墓
+            if (str.contains("申") && str.contains("子")&& str.contains("辰")) {
+                res.append("申子辰合水\t")
+            }
+            if (str.contains("寅") && str.contains("午")&& str.contains("戌")) {
+                res.append("午寅戌合火\t")
+            }
+            if (str.contains("巳") && str.contains("酉")&& str.contains("丑")) {
+                res.append("巳酉丑合金\t")
+            }
+            if (str.contains("亥") && str.contains("卯")&& str.contains("未")) {
+                res.append("亥卯未合木\t")
+            }
+
+
+            if (str.contains("寅") && str.contains("巳")&& str.contains("申")) {
+                res.append("寅巳申 无恩之刑\t")
+            }
+            if (str.contains("丑") && str.contains("戌")&& str.contains("未")) {
+                res.append("丑戌未 持势之刑\t")
+            }
+//            if (str.contains("寅") && str.contains("巳")&& str.contains("申")) {
+//                res.append("辰午酉亥 自刑")
+//            }
+            tv_info.text=res.toString()
+
+        }
+    }
     private fun startTimer() {
         try {
             timer = Timer()
@@ -257,7 +411,16 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
                             val lunar = Lunar(now)
                             val day = now.day.toString() + ""
 //                        if (!isFundMonitor)
-                            tv_day.text = day
+
+                            if(now.second==0&&now.minite==0){
+                                abc()
+                            }
+                            tv_month.text = now.monthStr+"月"
+                            if(tv_month.visibility==View.GONE){
+                                tv_day.text = now.day.toString()
+                            }else{
+                                tv_day.text = now.dayStr
+                            }
                             tv_lunar_month.setText(lunar.chinaMonthString)
                             tv_lunar_day.setText(lunar.chinaDayString)
                             tv_time.text = now.toShortTimeString()
@@ -329,7 +492,7 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
                     }
                 }
             }, 0, 1000)
-        }catch (e:Exception){
+        }catch (e: Exception){
             runOnUiThread {
                 textView_log.visibility = View.VISIBLE
                 textView_log.text = e.message
@@ -338,7 +501,7 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun loadSexdateFromCloud() {
-        _CloudUtils.getSetting(this,"0088", KEYS.wx_sex_date.toString(), object : CloudCallback {
+        _CloudUtils.getSetting(this, "0088", KEYS.wx_sex_date.toString(), object : CloudCallback {
             override fun excute(code: Int, result: Any) {
                 e(code)
                 e(result)
@@ -357,7 +520,7 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
 
     private fun e(log: Any) {
         Log.e("wangsc", log.toString())
-        _Utils.runlog2file(log.toString(),null)
+        _Utils.runlog2file(log.toString(), null)
     }
 
     /**
@@ -430,6 +593,7 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
             when (intent.action) {
                 Intent.ACTION_BATTERY_CHANGED -> {
                     val level = intent.getIntExtra("level", 0)
+                    e("电池电量：${level}")
                     tv_battery.text = "$level%"
                 }
             }
@@ -465,6 +629,7 @@ class ClockActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         if (requestCode == MY_PERMISSIONS_REQUEST) {
             for (i in grantResults.indices) {

@@ -139,16 +139,20 @@ object _CloudUtils {
             val accessToken = getToken(context)
                     ?: throw Exception("获取access token失败。")
 
+//            e("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             // 通过accessToken，env，云函数名，args 在微信小程序云端获取数据
             val url = "https://api.weixin.qq.com/tcb/invokecloudfunction?access_token=$accessToken&env=yipinshangdu-4wk7z&name=getPositions"
             val args: MutableList<PostArgument> = ArrayList()
             args.add(PostArgument("pwd", pwd))
+//            e("ccccccccccccccccccccccccccccccccccc")
             postRequestByJson(url, args, object : HttpCallback {
                 override fun excute(html: String) {
                     try {
+//                        e(html)
                         val resp_data: Any? = _JsonUtils.getValueByKey(html, "resp_data")
                         val data = _JsonUtils.getValueByKey(resp_data.toString(), "data")
                         val jsonArray = JSONArray(data)
+//                        e(data)
                         for (i in 0 until jsonArray.length()) {
 
                             val jsonObject = jsonArray.getString(i)
@@ -157,7 +161,8 @@ object _CloudUtils {
                             position.name = _JsonUtils.getValueByKey(jsonObject, "name")
                             position.code = _JsonUtils.getValueByKey(jsonObject, "code")
                             position.amount = _JsonUtils.getValueByKey(jsonObject, "amount").toInt()
-                            position.cost = _JsonUtils.getValueByKey(jsonObject, "cost").toDouble()
+                            position.cost = _JsonUtils.getValueByKey(jsonObject, "cost").toBigDecimal()
+                            position.exchange = _JsonUtils.getValueByKey(jsonObject, "exchange")
 
                             if (position.amount > 0) result.add(position)
                         }
@@ -213,7 +218,7 @@ object _CloudUtils {
             postRequestByJson(url, args, object : HttpCallback {
                 override fun excute(html: String) {
                     try {
-                        e(html)
+//                        e(html)
                         val resp_data: Any = _JsonUtils.getValueByKey(html, "resp_data")
                         if (_JsonUtils.isContainsKey(resp_data, "value")) {
                             val value = _JsonUtils.getValueByKey(resp_data, "value")
@@ -249,7 +254,7 @@ object _CloudUtils {
             postRequestByJson(url, args, object : HttpCallback {
                 override fun excute(html: String) {
                     try {
-                        e(html)
+//                        e(html)
                         callback.excute(0, html)
                     } catch (e: Exception) {
                         callback.excute(-2, e.message!!)
@@ -270,7 +275,7 @@ object _CloudUtils {
             postRequestByJson(url, args, object : HttpCallback {
                 override fun excute(html: String) {
                     try {
-                        e(html)
+//                        e(html)
                         val resp_data: Any? = _JsonUtils.getValueByKey(html, "resp_data")
                         val data = _JsonUtils.getValueByKey(resp_data.toString(), "data").toString()
                         val jsonArray = JSONArray(data)

@@ -1,34 +1,26 @@
 package com.wang17.myclock.database
 
+import java.math.BigDecimal
 import java.util.*
 
 class Position {
     var id: UUID
-    var code: String=""
-        get() = field
-        set(value) {
-            field = value
-            if (field.startsWith("6")) {
-                exchange = "sh"
-            } else {
-                exchange = "sz"
-            }
-        }
+    var code: String
     var name: String
-    var cost = 0.0
-    var type: Int // 0是股票，1是期货多单，2是期货空单
-    var amount: Int
+    var cost: BigDecimal
+    var type:Int // 0：股票；1：期货多单；-1：期货空单
+    var amount:Int
     var exchange: String
-    var profit: Double
+    var profit: BigDecimal
 
     init {
         id = UUID.randomUUID()
-        code = ""
-        name = ""
-        cost = 0.0
-        type = 0
-        amount = 0
-        exchange = ""
-        profit = 0.0
+        code=""
+        name=""
+        cost=0.toBigDecimal()
+        type=0
+        amount=0
+        exchange=""
+        profit=0.toBigDecimal()
     }
 }

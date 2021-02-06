@@ -10,6 +10,35 @@
     tools:context=".activity.ClockActivity">
 
     <TextView
+        android:id="@+id/tv_ganzhi"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="辛丑年庚寅月壬午日"
+        android:textColor="@color/progressbar_background"
+        android:textSize="25dp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_day2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/tv_day2" />
+
+    <TextView
+        android:id="@+id/tv_month"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:keepScreenOn="true"
+        android:text="2月"
+        android:textColor="#FFFFFF"
+        android:textSize="40dp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <TextView
         android:id="@+id/tv_day"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -17,7 +46,7 @@
         android:keepScreenOn="true"
         android:text="8"
         android:textColor="#FFFFFF"
-        android:textSize="100sp"
+        android:textSize="100dp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/tv_time"
         app:layout_constraintEnd_toEndOf="parent"
@@ -42,7 +71,7 @@
         android:keepScreenOn="true"
         android:text="16"
         android:textColor="#FFFFFF"
-        android:textSize="100sp"
+        android:textSize="100dp"
         android:textStyle="bold"
         android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/tv_lunar_day"
@@ -66,7 +95,7 @@
         android:layout_height="wrap_content"
         android:text="四月"
         android:textColor="@color/progressbar_background"
-        android:textSize="40sp"
+        android:textSize="40dp"
         android:textStyle="bold"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -78,7 +107,7 @@
         android:layout_height="wrap_content"
         android:text="88%"
         android:textColor="@color/progressbar_background"
-        android:textSize="40sp"
+        android:textSize="40dp"
         android:textStyle="bold"
         android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
@@ -114,7 +143,7 @@
         android:layout_height="wrap_content"
         android:text="廿一"
         android:textColor="@color/colorAccent"
-        android:textSize="40sp"
+        android:textSize="40dp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -125,7 +154,7 @@
         android:layout_height="wrap_content"
         android:text="周五"
         android:textColor="@color/progressbar_background"
-        android:textSize="40sp"
+        android:textSize="40dp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -142,7 +171,7 @@
         android:keepScreenOn="true"
         android:text="08:08"
         android:textColor="#FFFFFF"
-        android:textSize="100sp"
+        android:textSize="100dp"
         android:textStyle="bold"
         android:typeface="normal"
         app:layout_constraintBottom_toBottomOf="parent"

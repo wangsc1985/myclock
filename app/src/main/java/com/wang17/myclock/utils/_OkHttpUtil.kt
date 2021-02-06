@@ -2,9 +2,9 @@ package com.wang17.myclock.utils
 
 import android.util.Log
 import com.wang17.myclock.callback.HttpCallback
+import com.wang17.myclock.e
 import com.wang17.myclock.model.PostArgument
 import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
@@ -17,19 +17,13 @@ import java.io.IOException
  */
 object _OkHttpUtil {
 
-    @JvmField
-    var client: OkHttpClient
-    init {
-        client = OkHttpClient()
-    }
-
     @JvmStatic
     fun postRequestByJson(url: String?, args: List<PostArgument>, callback: HttpCallback) {
         try {
             //创建OkHttpClient对象。
-            val client = client
+            val client = _Session.okHttpClient
             //创建表单请求体
-            val JSON: MediaType? = "application/json; charset=utf-8".toMediaTypeOrNull()
+            val JSON = MediaType.parse("application/json; charset=utf-8")
             val json = JSONObject()
             for (arg in args) {
                 json.put(arg.name, arg.value)
@@ -49,7 +43,8 @@ object _OkHttpUtil {
                 override fun onResponse(call: Call, response: Response) {
                     if (response.isSuccessful) {
                         //回调的方法执行在子线程。
-                        val htmlStr = response.body!!.string()
+//                            e("${response.body()}")
+                        val htmlStr = response.body()!!.string()
                         callback.excute(htmlStr)
                     }
                 }
@@ -61,7 +56,7 @@ object _OkHttpUtil {
 
     fun postRequest(url: String?, args: List<PostArgument>, callback: HttpCallback) {
         //创建OkHttpClient对象。
-        val client = client
+        val client = _Session.okHttpClient
         //创建表单请求体
         val formBody = FormBody.Builder()
         //创建Request 对象。
@@ -83,7 +78,7 @@ object _OkHttpUtil {
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
                     //回调的方法执行在子线程。
-                    val htmlStr = response.body!!.string()
+                    val htmlStr = response.body()!!.string()
                     callback.excute(htmlStr)
                 }
             }
@@ -93,7 +88,7 @@ object _OkHttpUtil {
     @JvmStatic
     fun getRequest(url: String?, callback: HttpCallback) {
         //创建okHttpClient对象
-        val mOkHttpClient = client
+        val mOkHttpClient = _Session.okHttpClient
 
         //创建一个Request
         val request = Request.Builder()
@@ -103,13 +98,15 @@ object _OkHttpUtil {
         val call = mOkHttpClient!!.newCall(request)
         //请求加入调度
         call.enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {}
+            override fun onFailure(call: Call, e: IOException) {
+                e("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"+e.message)
+            }
 
             @Throws(IOException::class)
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
                     //回调的方法执行在子线程。
-                    val htmlStr = response.body!!.string()
+                    val htmlStr = response.body()!!.string()
                     callback.excute(htmlStr)
                 }
             }
